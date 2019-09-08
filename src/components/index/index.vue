@@ -57,7 +57,7 @@
           <Content :style="{padding: '5px', minHeight: '480px', background: '#fff'}">
             <!--<component :is="currentView" keep-alive></component>-->
             <keep-alive>
-              <router-view></router-view>
+              <router-view :is-active = "isActive" ></router-view>
             </keep-alive>
             <!-- 渲染组件 -->
             <!--<MapWindow v-bind:is-active="isActive"></MapWindow>-->
@@ -82,6 +82,7 @@ export default {
   methods: {
     mapWindowAutoLeft () {
       this.$router.push({path: '/map'})
+      this.isActive = !this.isActive
       /*      this.currentView = MapWindow
       this.isActive = !this.isActive */
     },
