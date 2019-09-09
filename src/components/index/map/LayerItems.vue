@@ -99,6 +99,8 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         .then(this.axios.spread(function (acct, perms) {
           that.layersget = acct.data
           that.geometrys = perms.data
+          console.log(that.layersget)
+          console.log(that.geometrys)
           // that.initOverlays()// 初始化图层
         })).catch(error => {
           console.log(error)
@@ -106,11 +108,53 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
     }
   },
   methods: {
-    addLayer: function () {
-
-    },
     axiosRequest (postconfig) { // 删除多个gemetry，批量删除
       return this.axios(postconfig)
+    },
+    selectLayer (e, layerId, index) { // 选择图层
+      if (this.activeLayer !== index) {
+        this.activeLayer = index
+        // this.mask.setFocus(layerId)
+      }
+    },
+    addLayer (gridName) {
+      var that = this
+      var postconfig = {
+        method: 'post',
+        url: 'api/addlayer',
+        data: {
+          layerName: gridName
+        },
+        transformRequest: [function (data) { // 登录时处理数据格式,处理后后台接收的参数为data按顺序传递
+          let ret = ''
+          for (let it in data) {
+            ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+          }
+          return ret
+        }]
+      }
+      this.axios(postconfig)
+        .then(
+          function (response) {
+            that.activeLayer = 0
+            var layerId = response.data.msg
+            that.addLayerInPage(gridName, layerId)
+            // that.startDraw()
+          })
+        .catch(function (error) {
+          console.log(error)
+        }) // axios
+    },
+    addLayerInPage (gridName, layerId) { // 页面添加layer数据
+      this.layersget.unshift({
+        layerId: layerId,
+        layerName: gridName
+      })
+      this.activeLayer = 0
+      /*     console.log(this.mask)
+      if (this.mask !== undefined) {
+        this.mask.setFocus(layerId)
+      } */
     }
   }
 }
