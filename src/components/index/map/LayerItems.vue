@@ -2,6 +2,9 @@
   <div>
     <promp-window @sendName ="addLayer" ></promp-window>
     <br>
+    <Drawer title="选择区域" placement="left" :closable="false"  width="200px" v-model="value2" @on-close="drawerClose">
+      <Tree :data="data2" ref="tree" ></Tree>
+    </Drawer>
     <div v-for="(layer,index) in this.layersget" :key="layer.layerId"  :style= "{height:'100%',display:'inline-block',marginBottom:'5px',border: index === activeLayer ? '2px solid blue' : '2px solid #66b3FF'}"
          @click=selectLayer($event,layer.layerId,index) >
       <div class="layerstyle">
@@ -155,6 +158,70 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       if (this.mask !== undefined) {
         this.mask.setFocus(layerId)
       } */
+    },
+    drawerClose: function () { // 选择背景地图的drawer关闭
+      // console.log(this.activeLayer)
+      // console.log(this.$refs.tree.getSelectedNodes()[0].title)
+      if (this.$refs.tree.getSelectedNodes().length === 0) {
+        this.$Message.info('没有选择背景图层')
+      } else {
+        var backcounty = this.$refs.tree.getSelectedNodes()[0].title
+        if (backcounty !== this.layersget[this.activeLayer].layerGround) {
+          var that = this
+          this.layersget[this.activeLayer].layerGround = backcounty
+          this.$Modal.confirm({
+            title: '背景变化',
+            content: '即将更改背景区域，请确定',
+            onOk: function () {
+              that.getBoundary(backcounty)
+            }
+          })
+        }
+      }
+    },
+    getBoundary: function (backcounty) {
+      var map = this.$parent.map
+      var bdary = new window.BMap.Boundary()
+      var layer = this.layersget[this.activeLayer]
+      var me = this
+      console.log(bdary)
+      bdary.get(backcounty, function (rs) { // 获取行政区域
+        // map.clearOverlays() // 清除地图覆盖物
+        var count = rs.boundaries.length // 行政区域的点有多少个，行政区域的多边形可能有多个
+        if (count === 0) {
+          alert('未能获取当前输入行政区域')
+          return
+        }
+        var pointArray = []
+        for (var i = 0; i < count; i++) {
+          var ply = new window.BMap.Polygon(rs.boundaries[i], {strokeWeight: 2, strokeColor: '#ff0000', strokeOpacity: 0.8}) // 建立多边形覆盖物
+          pointArray.push(ply.getPath())
+        }
+        if (layer.layerId !== undefined) {
+          // me.mask.deleteOverlays(layer.layerId)
+        }
+        for (var j = 0; j < pointArray.length; j++) { // 简化行政区域的点
+          var formatPolygon = { }
+          formatPolygon.geometryName = backcounty
+          formatPolygon.geometryClass = 'PLYGON'
+          formatPolygon.layerId = layer.layerId
+          formatPolygon.isBackground = 1
+          var pointArrayJson = []
+          for (var k = 0; k < pointArray[j].length; k++) {
+            pointArrayJson.push({
+              'lng': pointArray[j][k].lng,
+              'lat': pointArray[j][k].lat
+            })
+          }
+          formatPolygon.geometryData = pointArrayJson
+          console.log(formatPolygon)
+          me.mask.addOverlay(formatPolygon)
+          // formatGroundData.push(formatPolygon)
+          /*          var ply1 = new window.BMap.Polygon(pointArray[j], {strokeWeight: 2, strokeColor: '#ff0000', strokeOpacity: 0.8})
+          ply1.setFillOpacity(0.1)
+          map.addOverlay(ply1) */
+        }
+      })
     }
   }
 }
