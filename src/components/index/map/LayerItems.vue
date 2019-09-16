@@ -6,7 +6,7 @@
       <Tree :data="data2" ref="tree" ></Tree>
     </Drawer>
     <div v-for="(layer,index) in this.layersget" :key="layer.layerId"  :style= "{height:'100%',display:'inline-block',marginBottom:'5px',border: index === activeLayer ? '2px solid blue' : '2px solid #66b3FF'}"
-         @click=selectLayer($event,layer.layerId,index) >
+         @click=selectLayer($event,layer,index) >
       <div class="layerstyle">
         <label>图层名称:{{layer.layerName}}- {{ index }}</label>
         <label >
@@ -19,13 +19,13 @@
       <div>
         <button type="success" class ="buttonLeft"  @click="value2 = true" >选择区域</button>
         <button type="success" class ="buttonRight" >隐藏图层</button>
-        <button type="success" class ="buttonRight" >图层绘制</button>
+        <button type="success" class ="buttonRight" @click="drawLayer" >图层绘制</button>
       </div>
       <div>
         <button type="success" class ="buttonLeft" >导入数据</button>
         <button type="success" class ="buttonRight">清除图层</button>
 
-        <button type="success" class ="buttonRight" >保存图层</button>
+        <button type="success" class ="buttonRight" @click=saveLayer($event,layer.layerId,index)>保存图层</button>
 
       </div>
     </div>
@@ -33,8 +33,9 @@
 </template>
 
 <script>
-/* eslint-disable no-unused-vars,eqeqeq */
+/* eslint-disable no-unused-vars,eqeqeq,no-undef */
 import PrompWindow from './promp'
+import Mask from '../../../utils/Mask'
 export default {
   name: 'LayerItems',
   components: {PrompWindow},
@@ -90,6 +91,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
     layerChange: function () { // 同步获取数据库的图层信息
       console.log('layerChange')
       var that = this
+      this.mask = new Mask(this.map, this.geometrys, this.geometrysInLayer, this.overlayMap, this)
       var postconfig = {
         method: 'get',
         url: 'api/layerlist'
@@ -98,26 +100,44 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         method: 'get',
         url: 'api/geometrylist'
       }
-      this.axios.all([that.axiosRequest(postconfig), that.axiosRequest(postconfig1)])
+      this.axiosRequest(postconfig).then(
+        res => {
+          that.layersget = res.data
+          that.initPage()
+          console.log(res)
+        }
+      ).catch(
+        error => {
+          console.log(error)
+        }
+      )
+      /*      this.axios.all([that.axiosRequest(postconfig), that.axiosRequest(postconfig1)])
         .then(this.axios.spread(function (acct, perms) {
           that.layersget = acct.data
           that.geometrys = perms.data
           console.log(that.layersget)
           console.log(that.geometrys)
+          that.mask = new Mask(that.map, that.geometrys, that.geometrysInLayer, that.overlayMap, that)
           // that.initOverlays()// 初始化图层
         })).catch(error => {
           console.log(error)
-        })
+        }) */
     }
   },
   methods: {
-    axiosRequest (postconfig) { // 删除多个gemetry，批量删除
+    initPage: function () {
+      for (var layer of this.layersget) {
+        this.mask.addBackground(layer)
+      }
+      this.mask.setFocus(this.layersget[0])
+    },
+    axiosRequest: function (postconfig) { // 删除多个gemetry，批量删除
       return this.axios(postconfig)
     },
-    selectLayer (e, layerId, index) { // 选择图层
+    selectLayer (e, layer, index) { // 选择图层
       if (this.activeLayer !== index) {
         this.activeLayer = index
-        // this.mask.setFocus(layerId)
+        this.mask.setFocus(layer)
       }
     },
     addLayer (gridName) {
@@ -187,41 +207,68 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       console.log(bdary)
       bdary.get(backcounty, function (rs) { // 获取行政区域
         // map.clearOverlays() // 清除地图覆盖物
+        console.log(rs)
         var count = rs.boundaries.length // 行政区域的点有多少个，行政区域的多边形可能有多个
         if (count === 0) {
           alert('未能获取当前输入行政区域')
-          return
         }
-        var pointArray = []
-        for (var i = 0; i < count; i++) {
-          var ply = new window.BMap.Polygon(rs.boundaries[i], {strokeWeight: 2, strokeColor: '#ff0000', strokeOpacity: 0.8}) // 建立多边形覆盖物
-          pointArray.push(ply.getPath())
-        }
-        if (layer.layerId !== undefined) {
-          // me.mask.deleteOverlays(layer.layerId)
-        }
-        for (var j = 0; j < pointArray.length; j++) { // 简化行政区域的点
-          var formatPolygon = { }
-          formatPolygon.geometryName = backcounty
-          formatPolygon.geometryClass = 'PLYGON'
-          formatPolygon.layerId = layer.layerId
-          formatPolygon.isBackground = 1
-          var pointArrayJson = []
-          for (var k = 0; k < pointArray[j].length; k++) {
-            pointArrayJson.push({
-              'lng': pointArray[j][k].lng,
-              'lat': pointArray[j][k].lat
-            })
-          }
-          formatPolygon.geometryData = pointArrayJson
-          console.log(formatPolygon)
-          me.mask.addOverlay(formatPolygon)
-          // formatGroundData.push(formatPolygon)
-          /*          var ply1 = new window.BMap.Polygon(pointArray[j], {strokeWeight: 2, strokeColor: '#ff0000', strokeOpacity: 0.8})
-          ply1.setFillOpacity(0.1)
-          map.addOverlay(ply1) */
-        }
+        layer.layerData = rs.boundaries
+        me.mask.addBackground(layer)
+        me.mask.setFocus(layer)
+        console.log(layer)
       })
+    },
+    saveLayer: function (e, layerId, index) { // 保存图层  layer为数据，是layerget数组中的单元
+      var layer = this.layersget[this.activeLayer]
+      console.log(layer)
+      var postconfig = {
+        method: 'post',
+        url: 'api/savelayer',
+        dataType: 'json',
+        data: layer,
+        contentType: 'application/json'
+      }
+      this.axios(postconfig).then(res => { console.log(res) }).catch(error => { console.log(error) })
+      /* console.log(this.overlayMap)
+      var that = this
+      var layer = this.layersget[this.activeLayer]
+      var geometrys = this.geometrysInLayer[layerId] // 为map数据集合,key为geometyrId,value为geometry
+      console.log(that.overlayMap)
+      var deleteGeometrys = []
+      var deleteGeometrysId = []
+      var editGeometrys = []
+      for (let index in geometrys) {
+        if (that.overlayMap.get(geometrys[index])._exist == 0) { // this.overlayMap为map数据集合,key为geometry,value为MyOverlay
+          deleteGeometrysId.push(geometrys[index].geometryId)
+        } else if (that.overlayMap.get(geometrys[index])._isEdit) {
+          editGeometrys.push(geometrys[index])
+        }
+      }
+      this.axios.all([that.deleteGeometrys(deleteGeometrysId), that.editGeometrys(editGeometrys)])
+        .then(this.axios.spread(function (acct, perms) {
+          console.log(acct)
+          console.log(perms)
+          that.synchEdit(editGeometrys)
+          that.synchDelete(deleteGeometrysId, geometrys)
+          that.$Message.info('保存成功')
+        })).catch(error => {
+          that.$Message.info('保存未成功')
+          console.log(error)
+        }) */
+    },
+    drawLayer: function () {
+      this.$parent.generateDrawTool()
+      this.drawTool = this.$parent.drawTool
+      this.drawTool.removeEventListener('add')
+      this.drawTool.addEventListener('overlaycomplete', this.overlaycomplete, 'add')
+    },
+    overlaycomplete: function (e) {
+      console.log('overlaycomplete')
+      console.log(e.overlay)
+      console.log(e.overlay.getPath())
+      e.overlay.getPath().splice(1, 1)
+      console.log(this.drawTool.getDrawingMode())
+      // this.drawTool.setDrawingMode(BMAP_DRAWING_POLYGON)
     }
   }
 }

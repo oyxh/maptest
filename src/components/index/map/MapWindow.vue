@@ -33,12 +33,13 @@ export default {
     }
   },
   created () {
+    this.loadBMapScript()
   },
   mounted: function () {
     this.init().then((BMap) => {
-      this.loadScript()('../../../static/js/bmap/polygon.js', () => {
+      this.loadScript()('../../../../static/js/bmap/polygon.js', () => {
       }).then(res => {
-        return res('../../../static/js/bmap/drawingManager.js', () => {
+        return res('../../../../static/js/bmap/drawingManagerReal.js', () => {
           this.initMap()
         })
       })
@@ -123,6 +124,13 @@ export default {
           document.head.appendChild(script)
         })
       }
+    },
+    loadBMapScript: function () {
+      let link = document.createElement('link')
+      link.rel = 'stylesheet'
+      // link.href = 'http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.css';
+      link.href = '../../../static/js/bmap/drawingManager.css'
+      document.body.appendChild(link)
     },
     generateDrawTool () {
       var map = this.map

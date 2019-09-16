@@ -10,7 +10,7 @@ const state = {
   layerRefresh: false
 }
 const getters = { // 实时监听state值的变化(最新状态)
-  layerRefresh (state) { // 承载变化的showFooter的值
+  layerRefresh (state) {
     return state.layerRefresh
   }
 }
