@@ -13,7 +13,6 @@ Mask.prototype.initialize = function () {
     this.generateOverlay(this._geometrys[i])
   }
   this._map.addEventListener('zoomend', this.zoomAction.bind(this))
-  console.log(this._overlayMap)
   // this.setFocus(this.layersget[0].layerId)
 }
 Mask.prototype.generateOverlay = function (geometry, type) {
@@ -37,12 +36,10 @@ Mask.prototype.addBackground = function (layer) {
     var ply = new window.BMap.Polygon(layerData[i], {strokeWeight: 2, strokeColor: '#ff0000', strokeOpacity: 0.8}) // 建立多边形覆盖物
     ply.setFillOpacity(0.1)
     backgroundPly.push(ply)
-    console.log(ply.getPath())
     pointArray = pointArray.concat(ply.getPath())
     this._map.addOverlay(ply)
     ply.hide()
   }
-  console.log(pointArray)
   this._overlayMap.set(layer, backgroundPly)
   this._map.setViewport(pointArray)
 }
@@ -67,7 +64,6 @@ Mask.prototype.setFocus = function (layer) {
       pointArray = pointArray.concat(ply.getPath())
     }
   }
-  console.log(pointArray)
   this._map.setViewport(pointArray)
 }
 Mask.prototype.getCircleRadius = function () {

@@ -57,12 +57,14 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       overlayMap: null,
       value2: false,
       layersget: [], // 所有图层
-      geometrys: [], // 所有覆盖几何物体
+      geometrys: [], // 所有覆盖几何物体 来自数据库的数据
+      plyzones: [], // 所有覆盖物实体区域，每个区域包括一个或几个多边形区域
       geometrysInLayer: { },
       data2: [],
       drawTool: null,
       importData: false,
-      mask: null
+      mask: null,
+      isStartDraw: true
       // layerChange: this.layerChangeFromFather
     }
   },
@@ -70,7 +72,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
     this.overlayMap = new Map()
   },
   mounted () {
-    console.log('LayerItems is mounted')
     var that = this
     var postconfig = {
       method: 'get',
@@ -89,7 +90,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
   },
   watch: {
     layerChange: function () { // 同步获取数据库的图层信息
-      console.log('layerChange')
       var that = this
       this.mask = new Mask(this.map, this.geometrys, this.geometrysInLayer, this.overlayMap, this)
       var postconfig = {
@@ -180,8 +180,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       } */
     },
     drawerClose: function () { // 选择背景地图的drawer关闭
-      // console.log(this.activeLayer)
-      // console.log(this.$refs.tree.getSelectedNodes()[0].title)
       if (this.$refs.tree.getSelectedNodes().length === 0) {
         this.$Message.info('没有选择背景图层')
       } else {
@@ -204,10 +202,8 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       var bdary = new window.BMap.Boundary()
       var layer = this.layersget[this.activeLayer]
       var me = this
-      console.log(bdary)
       bdary.get(backcounty, function (rs) { // 获取行政区域
         // map.clearOverlays() // 清除地图覆盖物
-        console.log(rs)
         var count = rs.boundaries.length // 行政区域的点有多少个，行政区域的多边形可能有多个
         if (count === 0) {
           alert('未能获取当前输入行政区域')
@@ -215,12 +211,10 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         layer.layerData = rs.boundaries
         me.mask.addBackground(layer)
         me.mask.setFocus(layer)
-        console.log(layer)
       })
     },
     saveLayer: function (e, layerId, index) { // 保存图层  layer为数据，是layerget数组中的单元
       var layer = this.layersget[this.activeLayer]
-      console.log(layer)
       var postconfig = {
         method: 'post',
         url: 'api/savelayer',
@@ -261,14 +255,90 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       this.drawTool = this.$parent.drawTool
       this.drawTool.removeEventListener('add')
       this.drawTool.addEventListener('overlaycomplete', this.overlaycomplete, 'add')
+      var plys = []
     },
     overlaycomplete: function (e) {
-      console.log('overlaycomplete')
-      console.log(e.overlay)
-      console.log(e.overlay.getPath())
-      e.overlay.getPath().splice(1, 1)
-      console.log(this.drawTool.getDrawingMode())
+      // e.overlay.getPath().splice(1, 1)
       // this.drawTool.setDrawingMode(BMAP_DRAWING_POLYGON)
+      if (this.isStartDraw) { // 开始画第一个区域
+        var newGeometry = [e.overlay]
+        this.plyzones.push(newGeometry)
+      } else {
+        this.plyzones[this.plyzones.length - 1].push(e.overlay) //  最后一个添加1
+      }
+      this.continueDraw()
+    },
+    continueDraw: function () {
+      var that = this
+      this.$Modal.confirm({
+        title: '是否继续',
+        content: '<div><label>是否继续添加区域？</label> </div>',
+        onOk: function () {
+          that.isStartDraw = false
+        },
+        onCancel: function () {
+          that.isStartDraw = true
+          that.addGridZone()
+        }
+      })
+    },
+    addGridZone: function () {
+      console.log('it iss over')
+      var that = this
+      var layer = this.layersget[this.activeLayer]
+      var gridPoly = {
+        polygonName: '',
+        polygonMana: '',
+        polygonData: []
+      }
+      gridPoly.polygonData = this.plyzones[this.plyzones.length - 1]// this.polyPathToJson(e.overlay.getPath())
+      console.log('it iss over')
+      this.$Modal.confirm({
+        title: '请输入网格信息：',
+        render: (h) => {
+          const inputData = [{
+            domProps: {
+              value: gridPoly.polygonName,
+              autofocus: true,
+              placeholder: '请输入网格名字...',
+              style: 'color:red;width:100%;margin-bottom:8px'
+            },
+            on: {
+              input: (val) => {
+                gridPoly.polygonName = val.target.value
+              }
+            }
+          },
+          {
+            domProps: {
+              value: gridPoly.polygonMana,
+              autofocus: true,
+              placeholder: '请输入网格负责人...',
+              style: 'color:red;width:100%'
+            },
+            on: {
+              input: (val) => {
+                gridPoly.polygonMana = val.target.value
+              }
+            }
+          }
+          ]
+          return h('div', inputData.map(item => h('input', item)))
+        },
+        onOk: function () {
+          console.log(gridPoly.polygonData)
+          /*          layer.layerData.push(gridPoly)
+          var polygonObject = new MyOverlay(map, gridPoly, layer.layerData, this, false, e.overlay)
+          this.overlayMap.set(gridPoly, polygonObject) */
+        },
+        onCancel: function () {
+          for (var overlay of that.plyzones[that.plyzones.length - 1]) {
+            that.map.removeOverlay(overlay)
+          }
+          that.plyzones.pop()
+        }
+      })
+      console.log('it iss over')
     }
   }
 }
