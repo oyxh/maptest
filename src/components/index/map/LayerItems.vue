@@ -5,6 +5,16 @@
     <Drawer title="选择区域" placement="left" :closable="false"  width="200px" v-model="value2" @on-close="drawerClose">
       <Tree :data="data2" ref="tree" ></Tree>
     </Drawer>
+    <Modal
+      v-model="modal1"
+      title="是否继续"
+      @on-ok="continueDraw"
+      @on-cancel="endDraw"
+      :closable="false">
+      <p>是否继续为本单位添加区域？</p>
+      <p>继续选确认</p>
+      <p>否则取消</p>
+    </Modal>
     <div v-for="(layer,index) in this.layersget" :key="layer.layerId"  :style= "{height:'100%',display:'inline-block',marginBottom:'5px',border: index === activeLayer ? '2px solid blue' : '2px solid #66b3FF'}"
          @click=selectLayer($event,layer,index) >
       <div class="layerstyle">
@@ -64,7 +74,8 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       drawTool: null,
       importData: false,
       mask: null,
-      isStartDraw: true
+      isStartDraw: true,
+      modal1: false // 是否继续本区域的对话框
       // layerChange: this.layerChangeFromFather
     }
   },
@@ -255,7 +266,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       this.drawTool = this.$parent.drawTool
       this.drawTool.removeEventListener('add')
       this.drawTool.addEventListener('overlaycomplete', this.overlaycomplete, 'add')
-      var plys = []
     },
     overlaycomplete: function (e) {
       // e.overlay.getPath().splice(1, 1)
@@ -266,24 +276,18 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       } else {
         this.plyzones[this.plyzones.length - 1].push(e.overlay) //  最后一个添加1
       }
-      this.continueDraw()
+      this.modal1 = true
     },
     continueDraw: function () {
       var that = this
-      this.$Modal.confirm({
-        title: '是否继续',
-        content: '<div><label>是否继续添加区域？</label> </div>',
-        onOk: function () {
-          that.isStartDraw = false
-        },
-        onCancel: function () {
-          that.isStartDraw = true
-          that.addGridZone()
-        }
-      })
+      this.isStartDraw = false
+    },
+    endDraw: function () {
+      var that = this
+      this.isStartDraw = true
+      this.addGridZone()
     },
     addGridZone: function () {
-      console.log('it iss over')
       var that = this
       var layer = this.layersget[this.activeLayer]
       var gridPoly = {
@@ -292,7 +296,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         polygonData: []
       }
       gridPoly.polygonData = this.plyzones[this.plyzones.length - 1]// this.polyPathToJson(e.overlay.getPath())
-      console.log('it iss over')
       this.$Modal.confirm({
         title: '请输入网格信息：',
         render: (h) => {
@@ -338,7 +341,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
           that.plyzones.pop()
         }
       })
-      console.log('it iss over')
+      console.log(this.plyzones)
     }
   }
 }

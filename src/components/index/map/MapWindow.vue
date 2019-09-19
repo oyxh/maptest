@@ -144,7 +144,6 @@ export default {
             offset: new BMap.Size(20, 5), // 偏离值
             scale: 0.8, // 缩放
             drawingModes: [
-              BMAP_DRAWING_MARKER,
               BMAP_DRAWING_POLYGON
             ]
           },
