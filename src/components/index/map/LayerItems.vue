@@ -11,7 +11,7 @@
       @on-ok="continueDraw"
       @on-cancel="endDraw"
       :closable="false">
-      <p>是否继续为本单位添加区域？</p>
+      <p>是否继续为本单位添加区域，如本单位有多个区域请继续绘制？</p>
       <p>继续选确认</p>
       <p>否则取消</p>
     </Modal>
@@ -68,7 +68,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       value2: false,
       layersget: [], // 所有图层
       geometrys: [], // 所有覆盖几何物体 来自数据库的数据
-      plyzones: [], // 所有覆盖物实体区域，每个区域包括一个或几个多边形区域
+      plyzones: [], // 实体区域，每个区域包括一个或几个多边形区域
       geometrysInLayer: { },
       data2: [],
       drawTool: null,
@@ -268,22 +268,16 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       this.drawTool.addEventListener('overlaycomplete', this.overlaycomplete, 'add')
     },
     overlaycomplete: function (e) {
-      // e.overlay.getPath().splice(1, 1)
-      // this.drawTool.setDrawingMode(BMAP_DRAWING_POLYGON)
       if (this.isStartDraw) { // 开始画第一个区域
-        var newGeometry = [e.overlay]
-        this.plyzones.push(newGeometry)
-      } else {
-        this.plyzones[this.plyzones.length - 1].push(e.overlay) //  最后一个添加1
+        this.plyzones = []
       }
+      this.plyzones.push(e.overlay)
       this.modal1 = true
     },
     continueDraw: function () {
-      var that = this
       this.isStartDraw = false
     },
     endDraw: function () {
-      var that = this
       this.isStartDraw = true
       this.addGridZone()
     },
@@ -293,9 +287,9 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       var gridPoly = {
         polygonName: '',
         polygonMana: '',
-        polygonData: []
+        polygonData: [] //  存储区域内的多边形区域
       }
-      gridPoly.polygonData = this.plyzones[this.plyzones.length - 1]// this.polyPathToJson(e.overlay.getPath())
+      gridPoly.polygonData = this.plyzones.slice(0)// this.polyPathToJson(e.overlay.getPath())
       this.$Modal.confirm({
         title: '请输入网格信息：',
         render: (h) => {
@@ -335,13 +329,12 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
           this.overlayMap.set(gridPoly, polygonObject) */
         },
         onCancel: function () {
-          for (var overlay of that.plyzones[that.plyzones.length - 1]) {
+          for (var overlay of gridPoly.polygonData) {
             that.map.removeOverlay(overlay)
           }
-          that.plyzones.pop()
         }
       })
-      console.log(this.plyzones)
+      console.log(gridPoly.polygonData)
     }
   }
 }
