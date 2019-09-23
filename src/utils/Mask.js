@@ -71,6 +71,7 @@ Mask.prototype.setFocus = function (layer) {
 Mask.prototype.addGridZone = function (layer, gridPoly) {
   console.log('addGridZone')
   var myOverlays = new MyOverlay(gridPoly)
+  myOverlays.setAddFlag(1)
   if (this._geometrysInLayer[layer.layerId] == undefined) {
     this._geometrysInLayer[layer.layerId] = []
   }

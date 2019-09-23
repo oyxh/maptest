@@ -287,9 +287,9 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       var gridPoly = {
         polygonName: '',
         polygonMana: '',
-        polygonData: [] //  存储区域内的多边形区域
+        polygonData: null //  存储区域内的多边形区域
       }
-      gridPoly.polygonData = this.plyzones.slice(0)// this.polyPathToJson(e.overlay.getPath())
+      gridPoly.polygonData = new Set(this.plyzones)// this.plyzones.slice(0)// this.polyPathToJson(e.overlay.getPath())
       this.$Modal.confirm({
         title: '请输入网格信息：',
         render: (h) => {
