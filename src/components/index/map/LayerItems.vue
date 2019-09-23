@@ -324,6 +324,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         },
         onOk: function () {
           console.log(gridPoly.polygonData)
+          that.mask.addGridZone(layer, gridPoly)
           /*          layer.layerData.push(gridPoly)
           var polygonObject = new MyOverlay(map, gridPoly, layer.layerData, this, false, e.overlay)
           this.overlayMap.set(gridPoly, polygonObject) */

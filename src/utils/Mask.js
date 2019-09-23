@@ -1,4 +1,6 @@
 /* eslint-disable eqeqeq */
+import MyOverlay from './MyOverlay'
+
 function Mask (map, geometrys, geometrysInLayer, overlayMap, layerItem) {
   this._map = map
   this._geometrys = geometrys
@@ -65,6 +67,14 @@ Mask.prototype.setFocus = function (layer) {
     }
   }
   this._map.setViewport(pointArray)
+}
+Mask.prototype.addGridZone = function (layer, gridPoly) {
+  console.log('addGridZone')
+  var myOverlays = new MyOverlay(gridPoly)
+  if (this._geometrysInLayer[layer.layerId] == undefined) {
+    this._geometrysInLayer[layer.layerId] = []
+  }
+  this._geometrysInLayer[layer.layerId].push(myOverlays)
 }
 Mask.prototype.getCircleRadius = function () {
 }
