@@ -73,9 +73,10 @@ Mask.prototype.addGridZone = function (layer, gridPoly) {
   var myOverlays = new MyOverlay(gridPoly)
   myOverlays.setAddFlag(1)
   if (this._geometrysInLayer[layer.layerId] == undefined) {
-    this._geometrysInLayer[layer.layerId] = []
+    this._geometrysInLayer[layer.layerId] = new Set()
   }
-  this._geometrysInLayer[layer.layerId].push(myOverlays)
+  this._geometrysInLayer[layer.layerId].add(myOverlays)
+  console.log(this._geometrysInLayer)
 }
 Mask.prototype.getCircleRadius = function () {
 }

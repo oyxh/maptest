@@ -234,19 +234,20 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         contentType: 'application/json'
       }
       this.axios(postconfig).then(res => { console.log(res) }).catch(error => { console.log(error) })
-      /* console.log(this.overlayMap)
+
       var that = this
-      var layer = this.layersget[this.activeLayer]
-      var geometrys = this.geometrysInLayer[layerId] // 为map数据集合,key为geometyrId,value为geometry
-      console.log(that.overlayMap)
+      var myOverlays = this.geometrysInLayer[layerId] // 为map数据集合,key为geometyrId,value为geometry
       var deleteGeometrys = []
       var deleteGeometrysId = []
       var editGeometrys = []
-      for (let index in geometrys) {
-        if (that.overlayMap.get(geometrys[index])._exist == 0) { // this.overlayMap为map数据集合,key为geometry,value为MyOverlay
-          deleteGeometrysId.push(geometrys[index].geometryId)
-        } else if (that.overlayMap.get(geometrys[index])._isEdit) {
-          editGeometrys.push(geometrys[index])
+      var addGeometrys = []
+      for (let myoverlay of myOverlays) {
+        if (myoverlay._isAdd == 1 && myoverlay._isEdit !== 2) { // this.overlayMap为map数据集合,key为geometry,value为MyOverlay
+          addGeometrys.push(myoverlay._gridPoly)
+        } else if (myoverlay._isEdit == 1) {
+          editGeometrys.push(myoverlay._gridPoly)
+        } else if (myoverlay._isEdit == 2) {
+          deleteGeometrysId.push(myoverlay._gridPoly.layerId)
         }
       }
       this.axios.all([that.deleteGeometrys(deleteGeometrysId), that.editGeometrys(editGeometrys)])
@@ -259,7 +260,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         })).catch(error => {
           that.$Message.info('保存未成功')
           console.log(error)
-        }) */
+        })
     },
     drawLayer: function () {
       this.$parent.generateDrawTool()
