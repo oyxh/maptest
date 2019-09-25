@@ -224,8 +224,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         me.mask.setFocus(layer)
       })
     },
-    saveLayer: function (e, layerId, index) { // 保存图层  layer为数据，是layerget数组中的单元
-      var layer = this.layersget[this.activeLayer]
+    saveBackground: function (layer) {
       var postconfig = {
         method: 'post',
         url: 'api/savelayer',
@@ -233,8 +232,45 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         data: layer,
         contentType: 'application/json'
       }
-      this.axios(postconfig).then(res => { console.log(res) }).catch(error => { console.log(error) })
-
+      return this.axios(postconfig)
+    },
+    shallowCopy: function (src) {
+      var dst = {}
+      console.log(src)
+      for (var prop in src) {
+        console.log(prop)
+        if (src.hasOwnProperty(prop)) {
+          if (prop == 'geometryData') {
+            dst[prop] = Array.from(src[prop]).map(function (item) {
+              var formatPoints = []
+              for (let point of item.getPath()) {
+                formatPoints.push([point.lng, point.lat])
+              }
+              console.log(item.getPath())
+              return formatPoints
+            })
+          } else {
+            dst[prop] = src[prop]
+          }
+        }
+      }
+      return dst
+    },
+    addGeometrys: function (addGeometrys) {
+      console.log(addGeometrys)
+      var obj1 = addGeometrys.map(this.shallowCopy)
+      console.log(obj1)
+      var postconfig = {
+        method: 'post',
+        url: 'api/addgeometrys',
+        dataType: 'json',
+        data: obj1,
+        contentType: 'application/json'
+      }
+      return this.axios(postconfig)
+    },
+    saveLayer: function (e, layerId, index) { // 保存图层  layer为数据，是layerget数组中的单元
+      var layer = this.layersget[this.activeLayer]
       var that = this
       var myOverlays = this.geometrysInLayer[layerId] // 为map数据集合,key为geometyrId,value为geometry
       var deleteGeometrys = []
@@ -250,12 +286,10 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
           deleteGeometrysId.push(myoverlay._gridPoly.layerId)
         }
       }
-      this.axios.all([that.deleteGeometrys(deleteGeometrysId), that.editGeometrys(editGeometrys)])
+      this.axios.all([that.addGeometrys(addGeometrys), that.saveBackground(layer)])
         .then(this.axios.spread(function (acct, perms) {
           console.log(acct)
           console.log(perms)
-          that.synchEdit(editGeometrys)
-          that.synchDelete(deleteGeometrysId, geometrys)
           that.$Message.info('保存成功')
         })).catch(error => {
           that.$Message.info('保存未成功')
@@ -286,37 +320,37 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       var that = this
       var layer = this.layersget[this.activeLayer]
       var gridPoly = {
-        polygonName: '',
-        polygonMana: '',
-        polygonData: null //  存储区域内的多边形区域
+        geometryName: '',
+        geometryDes: '',
+        layerId: layer.layerId
       }
-      gridPoly.polygonData = new Set(this.plyzones)// this.plyzones.slice(0)// this.polyPathToJson(e.overlay.getPath())
+      gridPoly.geometryData = new Set(this.plyzones)// this.plyzones.slice(0)// this.polyPathToJson(e.overlay.getPath())
       this.$Modal.confirm({
         title: '请输入网格信息：',
         render: (h) => {
           const inputData = [{
             domProps: {
-              value: gridPoly.polygonName,
+              value: gridPoly.geometryName,
               autofocus: true,
               placeholder: '请输入网格名字...',
               style: 'color:red;width:100%;margin-bottom:8px'
             },
             on: {
               input: (val) => {
-                gridPoly.polygonName = val.target.value
+                gridPoly.geometryName = val.target.value
               }
             }
           },
           {
             domProps: {
-              value: gridPoly.polygonMana,
+              value: gridPoly.geometryDes,
               autofocus: true,
               placeholder: '请输入网格负责人...',
               style: 'color:red;width:100%'
             },
             on: {
               input: (val) => {
-                gridPoly.polygonMana = val.target.value
+                gridPoly.geometryDes = val.target.value
               }
             }
           }
@@ -324,19 +358,19 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
           return h('div', inputData.map(item => h('input', item)))
         },
         onOk: function () {
-          console.log(gridPoly.polygonData)
+          console.log(gridPoly.geometryData)
           that.mask.addGridZone(layer, gridPoly)
           /*          layer.layerData.push(gridPoly)
           var polygonObject = new MyOverlay(map, gridPoly, layer.layerData, this, false, e.overlay)
           this.overlayMap.set(gridPoly, polygonObject) */
         },
         onCancel: function () {
-          for (var overlay of gridPoly.polygonData) {
+          for (var overlay of gridPoly.geometryData) {
             that.map.removeOverlay(overlay)
           }
         }
       })
-      console.log(gridPoly.polygonData)
+      console.log(gridPoly.geometryData)
     }
   }
 }

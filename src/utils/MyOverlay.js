@@ -8,7 +8,7 @@ function MyOverlay (gridPoly, mask) {
 }
 MyOverlay.prototype.initialize = function () {
   console.log('myOVerlay')
-  for (var ply of this._gridPoly.polygonData) {
+  for (var ply of this._gridPoly.geometryData) {
     if (this._map == undefined) {
       this._map = ply.getMap()
     }
@@ -24,8 +24,8 @@ MyOverlay.prototype.initialize = function () {
 }
 MyOverlay.prototype.removeMyOverlay = function (e, ee, polygon) {
   this._map.removeOverlay(polygon)
-  this._gridPoly.polygonData.delete(polygon)
-  this._isEdit = this._gridPoly.polygonData.size > 0 ? 1 : 2
+  this._gridPoly.geometryData.delete(polygon)
+  this._isEdit = this._gridPoly.geometryData.size > 0 ? 1 : 2
   console.log(this._isEdit)
 }
 MyOverlay.prototype.editMyOverlay = function (e, ee, polygon) {
@@ -40,13 +40,13 @@ MyOverlay.prototype.editName = function (e, ee) {
 MyOverlay.prototype.mouseover = function (e) {
   this._activePly = e.target
   console.log(e.target)
-  for (var ply of this._gridPoly.polygonData) {
+  for (var ply of this._gridPoly.geometryData) {
     ply.setFillColor('red')
     ply.setFillOpacity(0.2)
   }
 }
 MyOverlay.prototype.mouseout = function (e) {
-  for (var ply of this._gridPoly.polygonData) {
+  for (var ply of this._gridPoly.geometryData) {
     ply.setFillColor('none')
     ply.setFillOpacity(0)
   }
