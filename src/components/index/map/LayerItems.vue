@@ -111,7 +111,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         method: 'get',
         url: 'api/geometrylist'
       }
-      this.axiosRequest(postconfig).then(
+      /*     this.axiosRequest(postconfig).then(
         res => {
           that.layersget = res.data
           that.initPage()
@@ -121,18 +121,19 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         error => {
           console.log(error)
         }
-      )
-      /*      this.axios.all([that.axiosRequest(postconfig), that.axiosRequest(postconfig1)])
+      ) */
+      this.axios.all([that.axiosRequest(postconfig), that.axiosRequest(postconfig1)])
         .then(this.axios.spread(function (acct, perms) {
           that.layersget = acct.data
+          that.initPage()
           that.geometrys = perms.data
           console.log(that.layersget)
           console.log(that.geometrys)
-          that.mask = new Mask(that.map, that.geometrys, that.geometrysInLayer, that.overlayMap, that)
+          // that.mask = new Mask(that.map, that.geometrys, that.geometrysInLayer, that.overlayMap, that)
           // that.initOverlays()// 初始化图层
         })).catch(error => {
           console.log(error)
-        }) */
+        })
     }
   },
   methods: {
@@ -234,11 +235,10 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       }
       return this.axios(postconfig)
     },
-    shallowCopy: function (src) {
+    shallowCopy: function (myOverlay) {
       var dst = {}
-      console.log(src)
+      var src = myOverlay._gridPoly
       for (var prop in src) {
-        console.log(prop)
         if (src.hasOwnProperty(prop)) {
           if (prop == 'geometryData') {
             dst[prop] = Array.from(src[prop]).map(function (item) {
@@ -246,7 +246,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
               for (let point of item.getPath()) {
                 formatPoints.push([point.lng, point.lat])
               }
-              console.log(item.getPath())
               return formatPoints
             })
           } else {
@@ -256,10 +255,8 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       }
       return dst
     },
-    addGeometrys: function (addGeometrys) {
-      console.log(addGeometrys)
-      var obj1 = addGeometrys.map(this.shallowCopy)
-      console.log(obj1)
+    addGeometrys: function (addMyOverlays) {
+      var obj1 = addMyOverlays.map(this.shallowCopy)
       var postconfig = {
         method: 'post',
         url: 'api/addgeometrys',
@@ -273,28 +270,36 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       var layer = this.layersget[this.activeLayer]
       var that = this
       var myOverlays = this.geometrysInLayer[layerId] // 为map数据集合,key为geometyrId,value为geometry
-      var deleteGeometrys = []
-      var deleteGeometrysId = []
-      var editGeometrys = []
-      var addGeometrys = []
-      for (let myoverlay of myOverlays) {
-        if (myoverlay._isAdd == 1 && myoverlay._isEdit !== 2) { // this.overlayMap为map数据集合,key为geometry,value为MyOverlay
-          addGeometrys.push(myoverlay._gridPoly)
-        } else if (myoverlay._isEdit == 1) {
-          editGeometrys.push(myoverlay._gridPoly)
-        } else if (myoverlay._isEdit == 2) {
-          deleteGeometrysId.push(myoverlay._gridPoly.layerId)
+      var deleteMyOverlays = []
+      var editMyOverlays = []
+      var addMyOverlays = []
+      if (myOverlays !== undefined) {
+        for (let myoverlay of myOverlays) {
+          if (myoverlay._isAdd == 1 && myoverlay._isEdit !== 2) { // this.overlayMap为map数据集合,key为geometry,value为MyOverlay
+            addMyOverlays.push(myoverlay)
+          } else if (myoverlay._isEdit == 1) {
+            editMyOverlays.push(myoverlay)
+          } else if (myoverlay._isEdit == 2) {
+            deleteMyOverlays.push(myoverlay)
+          }
         }
       }
-      this.axios.all([that.addGeometrys(addGeometrys), that.saveBackground(layer)])
+      this.axios.all([that.addGeometrys(addMyOverlays), that.saveBackground(layer)])
         .then(this.axios.spread(function (acct, perms) {
           console.log(acct)
           console.log(perms)
+          that.synchAdd(acct.data.msg, addMyOverlays)
           that.$Message.info('保存成功')
         })).catch(error => {
           that.$Message.info('保存未成功')
           console.log(error)
         })
+    },
+    synchAdd: function (addMyOverlaysId, addMyOverlays) {
+      for (let index in addMyOverlays) {
+        addMyOverlays[index]._gridPoly.geometryId = addMyOverlaysId[index]
+        addMyOverlays[index].setAddFlag(0)
+      }
     },
     drawLayer: function () {
       this.$parent.generateDrawTool()

@@ -138,7 +138,7 @@ export default {
         var drawingManager = new window.BMapLib.DrawingManager(map, {
           isOpen: true, // 是否开启绘制模式
           enableDrawingTool: true, // 是否显示工具栏
-          // drawingMode:BMAP_DRAWING_POLYGON,//绘制模式  多边形
+          drawingMode: BMAP_DRAWING_POLYGON, // 绘制模式  多边形
           drawingToolOptions: {
             anchor: BMAP_ANCHOR_TOP_RIGHT, // 位置
             offset: new BMap.Size(20, 5), // 偏离值

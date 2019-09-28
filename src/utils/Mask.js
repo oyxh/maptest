@@ -47,29 +47,68 @@ Mask.prototype.addBackground = function (layer) {
 }
 Mask.prototype.deleteOverlays = function (layerId) { // 删除 layserId上的所有覆盖5️⃣
 }
-Mask.prototype.setFocus = function (layer) {
-  var me = this
-  var lastLayerGround = me._overlayMap.get(this._activeLayer)
-  if (lastLayerGround !== undefined) {
-    for (let ply of lastLayerGround) {
-      ply.hide()
+Mask.prototype.hideLayer = function (layer) {
+  if (layer !== undefined) {
+    var me = this
+    var lastLayerGround = me._overlayMap.get(layer)
+    if (lastLayerGround !== undefined) {
+      for (let ply of lastLayerGround) {
+        ply.hide()
+      }
+    }
+    var myOverlaysSet = this._geometrysInLayer[layer.layerId]
+    if (myOverlaysSet !== undefined) {
+      console.log(myOverlaysSet)
+      for (let myOverlay of myOverlaysSet) {
+        for (let overlay of myOverlay._gridPoly.geometryData) {
+          overlay.hide()
+        }
+      }
     }
   }
-  this._activeLayer = layer
-  var layerData = me._overlayMap.get(layer)
+}
+Mask.prototype.showLayer = function (layer) {
+  console.log(layer)
+  var me = this
   var pointArray = []
+  var layerData = me._overlayMap.get(layer)
   if (layerData === undefined) {
-    pointArray.push(new window.BMap.Point(116.404, 39.915))
   } else {
     for (let ply of layerData) {
       ply.show()
       pointArray = pointArray.concat(ply.getPath())
     }
   }
-  this._map.setViewport(pointArray)
+  var addBackFlag = false
+  if (pointArray.length == 0) {
+    addBackFlag = true
+  }
+  var myOverlaysSet = this._geometrysInLayer[layer.layerId]
+  console.log(myOverlaysSet)
+  if (myOverlaysSet !== undefined) {
+    for (let myOverlay of myOverlaysSet) {
+      for (let overlay of myOverlay._gridPoly.geometryData) {
+        overlay.show()
+        if (addBackFlag) {
+          pointArray = pointArray.concat(overlay.getPath())
+        }
+      }
+    }
+  }
+
+  if (pointArray.length == 0) {
+    pointArray.push(new window.BMap.Point(116.404, 39.915))
+  }
+  console.log(pointArray)
+  me._map.setViewport(pointArray)
+}
+Mask.prototype.setFocus = function (layer) {
+  var me = this
+  me.hideLayer(this._activeLayer)
+  this._activeLayer = layer
+  me.showLayer(layer)
 }
 Mask.prototype.addGridZone = function (layer, gridPoly) {
-  console.log('addGridZone')
   var myOverlays = new MyOverlay(gridPoly)
   myOverlays.setAddFlag(1)
   if (this._geometrysInLayer[layer.layerId] == undefined) {
