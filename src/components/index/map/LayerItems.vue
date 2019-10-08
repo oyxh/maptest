@@ -23,7 +23,7 @@
           关闭编辑
         </label>
         <input  type="checkbox" value="checked" >
-        <button type="success"  class="closeButton" @click=deleteLayer($event,layer.layerId,index)>&times;</button><br>
+        <button type="success"  class="closeButton" @click=deleteLayer($event,layer,index)>&times;</button><br>
         <label>图层背景:{{layer.layerGround}}</label>
       </div>
       <div>
@@ -102,7 +102,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
   watch: {
     layerChange: function () { // 同步获取数据库的图层信息
       var that = this
-      this.mask = new Mask(this.map, this.geometrys, this.geometrysInLayer, this.overlayMap, this)
       var postconfig = {
         method: 'get',
         url: 'api/layerlist'
@@ -111,26 +110,13 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         method: 'get',
         url: 'api/geometrylist'
       }
-      /*     this.axiosRequest(postconfig).then(
-        res => {
-          that.layersget = res.data
-          that.initPage()
-          console.log(res)
-        }
-      ).catch(
-        error => {
-          console.log(error)
-        }
-      ) */
       this.axios.all([that.axiosRequest(postconfig), that.axiosRequest(postconfig1)])
         .then(this.axios.spread(function (acct, perms) {
           that.layersget = acct.data
-          that.initPage()
           that.geometrys = perms.data
           console.log(that.layersget)
           console.log(that.geometrys)
-          // that.mask = new Mask(that.map, that.geometrys, that.geometrysInLayer, that.overlayMap, that)
-          // that.initOverlays()// 初始化图层
+          that.initPage()
         })).catch(error => {
           console.log(error)
         })
@@ -138,19 +124,68 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
   },
   methods: {
     initPage: function () {
+      this.mask = new Mask(this.map, this.geometrysInLayer, this.overlayMap, this)
       for (var layer of this.layersget) {
         this.mask.addBackground(layer)
       }
+      for (var gridPoly of this.geometrys) {
+        gridPoly.geometryData = new Set(gridPoly.geometryData.map(this.generateOverlay))
+        this.mask.addGridZone(gridPoly)
+      }
       this.mask.setFocus(this.layersget[0])
+    },
+    generateOverlay: function (geometryData) {
+      var ply = new window.BMap.Polygon(geometryData, {strokeWeight: 2, strokeColor: '#ff0000', strokeOpacity: 0.8}) // 建立多边形覆盖物
+      ply.setFillOpacity(0.1)
+      this.map.addOverlay(ply)
+      ply.hide()
+      return ply
     },
     axiosRequest: function (postconfig) { // 删除多个gemetry，批量删除
       return this.axios(postconfig)
     },
     selectLayer (e, layer, index) { // 选择图层
+      console.log(layer)
+      console.log(index)
+      console.log(this.activeLayer)
       if (this.activeLayer !== index) {
         this.activeLayer = index
         this.mask.setFocus(layer)
       }
+    },
+    --deleteLayer (e, layer, index) { // 删除图层及其内容
+      var that = this
+      console.log(this.geometrysInLayer[layer.layerId])
+      var overlayset = this.geometrysInLayer[layer.layerId]
+      var myOverlays = overlayset == undefined ? [] : Array.from(overlayset)
+      that.deleteGeometrys(myOverlays).then(
+        res => {
+          console.log(res)
+          this._mask.delete(layer)
+          return that.removeLayer(layer.layerId)
+        }
+      ).then(res => {
+        console.log(res)
+        that.layersget.splice(index, 1)
+      }).catch(error => {
+        console.log(error)
+      })
+    },
+    removeLayer (layerId) {
+      var postconfig = {
+        method: 'post',
+        url: 'api/removelayer',
+        dataType: 'json',
+        data: {id: layerId},
+        transformRequest: [function (data) { // 登录时处理数据格式,处理后后台接收的参数为data按顺序传递
+          let ret = ''
+          for (let it in data) {
+            ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+          }
+          return ret
+        }]
+      }
+      return this.axios(postconfig)
     },
     addLayer (gridName) {
       var that = this
@@ -174,7 +209,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
             that.activeLayer = 0
             var layerId = response.data.msg
             that.addLayerInPage(gridName, layerId)
-            // that.startDraw()
           })
         .catch(function (error) {
           console.log(error)
@@ -186,10 +220,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         layerName: gridName
       })
       this.activeLayer = 0
-      /*     console.log(this.mask)
-      if (this.mask !== undefined) {
-        this.mask.setFocus(layerId)
-      } */
     },
     drawerClose: function () { // 选择背景地图的drawer关闭
       if (this.$refs.tree.getSelectedNodes().length === 0) {
@@ -266,6 +296,32 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       }
       return this.axios(postconfig)
     },
+    editGeometrys: function (editMyOverlays) {
+      var obj1 = editMyOverlays.map(this.shallowCopy)
+      var postconfig = {
+        method: 'post',
+        url: 'api/editgeometrys',
+        dataType: 'json',
+        data: obj1,
+        contentType: 'application/json'
+      }
+      return this.axios(postconfig)
+    },
+    deleteGeometrys: function (deleteMyOverlays) {
+      var obj1 = []
+      for (let myOverlay of deleteMyOverlays) {
+        obj1.push(myOverlay._gridPoly.geometryId)
+      }
+      console.log(obj1)
+      var postconfig = {
+        method: 'post',
+        url: 'api/removegeometrys',
+        dataType: 'json',
+        data: obj1,
+        contentType: 'application/json'
+      }
+      return this.axios(postconfig)
+    },
     saveLayer: function (e, layerId, index) { // 保存图层  layer为数据，是layerget数组中的单元
       var layer = this.layersget[this.activeLayer]
       var that = this
@@ -284,11 +340,11 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
           }
         }
       }
-      this.axios.all([that.addGeometrys(addMyOverlays), that.saveBackground(layer)])
-        .then(this.axios.spread(function (acct, perms) {
-          console.log(acct)
-          console.log(perms)
+      this.axios.all([that.deleteGeometrys(deleteMyOverlays), that.editGeometrys(editMyOverlays), that.addGeometrys(addMyOverlays), that.saveBackground(layer)])
+        .then(this.axios.spread(function (del, edit, acct, perms) {
           that.synchAdd(acct.data.msg, addMyOverlays)
+          that.synchEdit(editMyOverlays)
+          that.synchDelete(deleteMyOverlays)
           that.$Message.info('保存成功')
         })).catch(error => {
           that.$Message.info('保存未成功')
@@ -299,6 +355,16 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       for (let index in addMyOverlays) {
         addMyOverlays[index]._gridPoly.geometryId = addMyOverlaysId[index]
         addMyOverlays[index].setAddFlag(0)
+      }
+    },
+    synchEdit: function (editMyOverlays) {
+      for (let myOverlay of editMyOverlays) {
+        myOverlay.setEditFlag(0)
+      }
+    },
+    synchDelete: function (deleteMyOverlays) {
+      for (let myOverlay of deleteMyOverlays) {
+        myOverlay = null
       }
     },
     drawLayer: function () {
@@ -364,10 +430,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         },
         onOk: function () {
           console.log(gridPoly.geometryData)
-          that.mask.addGridZone(layer, gridPoly)
-          /*          layer.layerData.push(gridPoly)
-          var polygonObject = new MyOverlay(map, gridPoly, layer.layerData, this, false, e.overlay)
-          this.overlayMap.set(gridPoly, polygonObject) */
+          that.mask.addGridZone(gridPoly, layer)
         },
         onCancel: function () {
           for (var overlay of gridPoly.geometryData) {
@@ -389,9 +452,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
     height:38px;
     background:#D8D8D8;
     lineHeight:38px;
-    /*  color:  #868E8E;
-      textAlign:left;
-      display:inline-block;*/
   }
   .buttonLeft{
     width:33.33%;

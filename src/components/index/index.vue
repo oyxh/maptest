@@ -79,6 +79,9 @@ export default {
       currentView: MapWindow
     }
   },
+  mounted: function () {
+    this.mapWindowAutoLeft()
+  },
   methods: {
     mapWindowAutoLeft () {
       this.$router.push({path: '/map'})
