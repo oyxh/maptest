@@ -132,7 +132,9 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         gridPoly.geometryData = new Set(gridPoly.geometryData.map(this.generateOverlay))
         this.mask.addGridZone(gridPoly)
       }
-      this.mask.setFocus(this.layersget[0])
+      if (this.layersget[0] !== undefined) {
+        this.mask.setFocus(this.layersget[0])
+      }
     },
     generateOverlay: function (geometryData) {
       var ply = new window.BMap.Polygon(geometryData, {strokeWeight: 2, strokeColor: '#ff0000', strokeOpacity: 0.8}) // 建立多边形覆盖物
@@ -144,32 +146,50 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
     axiosRequest: function (postconfig) { // 删除多个gemetry，批量删除
       return this.axios(postconfig)
     },
-    selectLayer (e, layer, index) { // 选择图层
-      console.log(layer)
-      console.log(index)
-      console.log(this.activeLayer)
+    selectLayer: function (e, layer, index) { // 选择图层
       if (this.activeLayer !== index) {
         this.activeLayer = index
         this.mask.setFocus(layer)
       }
     },
-    --deleteLayer (e, layer, index) { // 删除图层及其内容
+    confirmDelete: function (layer, index) {
       var that = this
-      console.log(this.geometrysInLayer[layer.layerId])
+      this.$Modal.confirm({
+        title: '请确认是否删除',
+        content: '<p>删除后不可恢复，请注意！</p>',
+        onOk: () => {
+          that.deleteExcute(layer, index)
+        },
+        onCancel: () => {
+        }
+      })
+    },
+    deleteExcute: function (layer, index) {
+      var that = this
       var overlayset = this.geometrysInLayer[layer.layerId]
       var myOverlays = overlayset == undefined ? [] : Array.from(overlayset)
       that.deleteGeometrys(myOverlays).then(
         res => {
           console.log(res)
-          this._mask.delete(layer)
+          that.mask.deleteLayer(layer)
+          that.$Message.info('删除图层内容成功')
           return that.removeLayer(layer.layerId)
         }
       ).then(res => {
         console.log(res)
         that.layersget.splice(index, 1)
+        that.$Message.info('删除图层成功')
+        if (that.layersget.length > 0) {
+          that.activeLayer = 0
+          that.mask.setFocus(this.layersget[0])
+        }
       }).catch(error => {
         console.log(error)
+        that.$Message.info('删除图层内容未成功')
       })
+    },
+    deleteLayer: function (e, layer, index) { // 删除图层及其内容
+      this.confirmDelete(layer, index)
     },
     removeLayer (layerId) {
       var postconfig = {
@@ -220,6 +240,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         layerName: gridName
       })
       this.activeLayer = 0
+      this.mask.setFocus(this.layersget[0])
     },
     drawerClose: function () { // 选择背景地图的drawer关闭
       if (this.$refs.tree.getSelectedNodes().length === 0) {

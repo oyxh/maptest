@@ -54,6 +54,8 @@ Mask.prototype.deleteLayer = function (layer) {
         myOverlay.delete()
       }
     }
+    this._geometrysInLayer[layer.layerId] = null
+    this._activeLayer = null
   }
 }
 Mask.prototype.hideLayer = function (layer) {
@@ -107,7 +109,11 @@ Mask.prototype.showLayer = function (layer) {
 }
 Mask.prototype.setFocus = function (layer) {
   var me = this
-  me.hideLayer(this._activeLayer)
+  console.log(layer)
+  console.log(this._activeLayer)
+  if (this._activeLayer !== null) {
+    me.hideLayer(this._activeLayer)
+  }
   this._activeLayer = layer
   me.showLayer(layer)
 }
