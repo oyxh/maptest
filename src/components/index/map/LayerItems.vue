@@ -114,8 +114,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         .then(this.axios.spread(function (acct, perms) {
           that.layersget = acct.data
           that.geometrys = perms.data
-          console.log(that.layersget)
-          console.log(that.geometrys)
           that.initPage()
         })).catch(error => {
           console.log(error)
@@ -125,18 +123,33 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
   methods: {
     initPage: function () {
       this.mask = new Mask(this.map, this.geometrysInLayer, this.overlayMap, this)
-      for (var layer of this.layersget) {
+      for (let layer of this.layersget) {
         this.mask.addBackground(layer)
       }
       for (var gridPoly of this.geometrys) {
+        if (gridPoly.isbackground == 'WGS84') {
+          for (let pointString of gridPoly.geometryData) {
+            this.covertToBaidu(pointString, gridPoly.geometryName)
+          }
+        }
         gridPoly.geometryData = new Set(gridPoly.geometryData.map(this.generateOverlay))
         this.mask.addGridZone(gridPoly)
+      }
+      for (let layer of this.layersget) { // 先隐藏所有
+        this.mask.hideLayer(layer)
       }
       if (this.layersget[0] !== undefined) {
         this.mask.setFocus(this.layersget[0])
       }
     },
+    covertToBaidu: function (pointString, name) {
+      var that = this
+      var result = []
+      var resultString = ''
+      var strs = [] // 定义一数组
+    },
     generateOverlay: function (geometryData) {
+      // console.log(geometryData)
       var ply = new window.BMap.Polygon(geometryData, {strokeWeight: 2, strokeColor: '#ff0000', strokeOpacity: 0.8}) // 建立多边形覆盖物
       ply.setFillOpacity(0.1)
       this.map.addOverlay(ply)
@@ -333,7 +346,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       for (let myOverlay of deleteMyOverlays) {
         obj1.push(myOverlay._gridPoly.geometryId)
       }
-      console.log(obj1)
       var postconfig = {
         method: 'post',
         url: 'api/removegeometrys',
@@ -414,6 +426,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       var gridPoly = {
         geometryName: '',
         geometryDes: '',
+        isBackground: 'BD09',
         layerId: layer.layerId
       }
       gridPoly.geometryData = new Set(this.plyzones)// this.plyzones.slice(0)// this.polyPathToJson(e.overlay.getPath())
@@ -450,7 +463,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
           return h('div', inputData.map(item => h('input', item)))
         },
         onOk: function () {
-          console.log(gridPoly.geometryData)
           that.mask.addGridZone(gridPoly, layer)
         },
         onCancel: function () {
@@ -459,7 +471,6 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
           }
         }
       })
-      console.log(gridPoly.geometryData)
     }
   }
 }

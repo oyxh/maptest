@@ -160,6 +160,13 @@ EditOverlay.prototype.show = function () {
     this._middleCircles[i].show()
   }
 }
+EditOverlay.prototype.delete = function () {
+  console.log('delete points')
+  for (let i = 0; i < this._pointCircles.length; i++) {
+    this._map.removeOverlay(this._pointCircles[i]._circle)
+    this._map.removeOverlay(this._middleCircles[i]._circle)
+  }
+}
 EditOverlay.prototype.redrawPolygon = function () {
   this._overlay.setPath(this._pointArray)
   this._polygon = new MyPolygon(this._pointArray, this._map)

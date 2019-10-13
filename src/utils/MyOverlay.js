@@ -9,10 +9,13 @@ function MyOverlay (gridPoly, mask) {
   this._isAdd = 0 // 0 原有，1 添加
   this._editOverlays = new Map()
   this._overlayLabels = new Map()
+  if (this._gridPoly.isBackground !== 'BD09') {
+    this._isEdit = 1
+    this._gridPoly.isBackground = 'BD09'
+  }
   this.initialize()
 }
 MyOverlay.prototype.initialize = function () {
-  console.log('myOVerlay')
   for (var ply of this._gridPoly.geometryData) {
     if (this._map == undefined) {
       this._map = ply.getMap()
@@ -33,6 +36,8 @@ MyOverlay.prototype.initialize = function () {
 MyOverlay.prototype.removeMyOverlay = function (e, ee, polygon) {
   this._map.removeOverlay(polygon) // 删除地图上的覆盖物
   this._overlayLabels.get(polygon).remove() // 移除名字
+  console.log(this._editOverlays.get(polygon))
+  this._editOverlays.get(polygon).delete() // 移除编辑点
   this._gridPoly.geometryData.delete(polygon) // 删除数据
   this._isEdit = (this._gridPoly.geometryData.size - 1) > 0 ? 1 : 2 // 设置状态
 }
@@ -50,7 +55,6 @@ MyOverlay.prototype.editName = function (e, ee) {
 }
 MyOverlay.prototype.mouseover = function (e) {
   this._activePly = e.target
-  // console.log(e.target)
   for (var ply of this._gridPoly.geometryData) {
     ply.setFillColor('red')
     ply.setFillOpacity(0.2)
@@ -107,6 +111,10 @@ MyOverlay.prototype.delete = function () {
     this._map.removeOverlay(overlay)
     overlayLabel.remove()
     overlay = null
+  }
+  for (let editOverlay of this._editOverlays.values()) {
+    editOverlay.delete()
+    editOverlay = null
   }
 }
 MyOverlay.prototype.setRadius = function (radius) {

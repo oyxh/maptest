@@ -101,10 +101,11 @@ Mask.prototype.showLayer = function (layer) {
       }
     }
   }
-
+  console.log(pointArray)
   if (pointArray.length == 0) {
     pointArray.push(new window.BMap.Point(116.404, 39.915))
   }
+  console.log(pointArray)
   me._map.setViewport(pointArray)
 }
 Mask.prototype.setFocus = function (layer) {
@@ -139,16 +140,13 @@ Mask.prototype.getDistance = function (point1, point2) {
   return Math.sqrt((point1.lng - point2.lng) * (point1.lng - point2.lng) + (point1.lat - point2.lat) * (point1.lat - point2.lat))
 }
 Mask.prototype.zoomAction = function (e) {
-  console.log('zoomAction')
   var radius = this.getCircleRadius()
   var layer = this._activeLayer
   if (this._activeLayer == undefined) {
     return
   }
-  console.log(radius, layer)
   var myOverlaysSet = this._geometrysInLayer[layer.layerId]
   if (myOverlaysSet !== undefined) {
-    console.log(myOverlaysSet)
     for (let myOverlay of myOverlaysSet) {
       myOverlay.setRadius(radius) //  修改编辑点的半径
     }
