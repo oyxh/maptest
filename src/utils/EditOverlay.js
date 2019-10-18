@@ -13,6 +13,11 @@ function EditOverlay (overlay, mask) {
   this._middleCircles = []
 }
 EditOverlay.prototype.initialize = function () {
+  this._pointArray = this._overlay.getPath()
+  this._polygon = new MyPolygon(this._pointArray, this._map)
+  this._middleArray = []
+  this._pointCircles = []
+  this._middleCircles = []
   for (let i = 0; i < this._pointArray.length; i++) {
     this._middleArray.push(this.getMiddlePoint(this._pointArray[i], this._pointArray[(i + 1) % this._pointArray.length]))
   }

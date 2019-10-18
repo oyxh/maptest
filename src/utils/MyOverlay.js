@@ -13,15 +13,10 @@ function MyOverlay (gridPoly, mask) {
     this._isEdit = 1
     this._gridPoly.isBackground = 'BD09'
   }
-  this.initialize()
-}
-MyOverlay.prototype.initialize = function () {
   for (var ply of this._gridPoly.geometryData) {
     if (this._map == undefined) {
       this._map = ply.getMap()
     }
-    var editOverlay = new EditOverlay(ply, this._mask)
-    this._editOverlays.set(ply, editOverlay)
     var markerMenu = new window.BMap.ContextMenu()
     markerMenu.addItem(new window.BMap.MenuItem('删除区域', this.removeMyOverlay.bind(this)))
     markerMenu.addItem(new window.BMap.MenuItem('变更名字', this.editName.bind(this)))
@@ -30,8 +25,13 @@ MyOverlay.prototype.initialize = function () {
     ply.addContextMenu(markerMenu)
     ply.addEventListener('mouseover', this.mouseover.bind(this))
     ply.addEventListener('mouseout', this.mouseout.bind(this))
+    this.showLabel()
+    this.initialize(ply)
   }
-  this.showLabel()
+}
+MyOverlay.prototype.initialize = function (ply) {
+  var editOverlay = new EditOverlay(ply, this._mask)
+  this._editOverlays.set(ply, editOverlay)
 }
 MyOverlay.prototype.removeMyOverlay = function (e, ee, polygon) {
   this._map.removeOverlay(polygon) // 删除地图上的覆盖物
@@ -48,10 +48,14 @@ MyOverlay.prototype.editMyOverlay = function (e, ee, polygon) {
   // this._editOverlays.set(polygon, editOverlay)
 }
 MyOverlay.prototype.editClose = function (e, ee) {
+  console.log(this._mask._layerItem)
+  console.log('editClose')
+  console.log(this._mask._layerItem)
+  this._mask._layerItem.savePolygon(this)
   console.log('editClose')
 }
-MyOverlay.prototype.editName = function (e, ee) {
-  console.log('editClose')
+MyOverlay.prototype.editName = function (e, ee, polygon) {
+
 }
 MyOverlay.prototype.mouseover = function (e) {
   this._activePly = e.target
@@ -112,9 +116,11 @@ MyOverlay.prototype.delete = function () {
     overlayLabel.remove()
     overlay = null
   }
+  this.deleteEditPoint()
+}
+MyOverlay.prototype.deleteEditPoint = function () {
   for (let editOverlay of this._editOverlays.values()) {
     editOverlay.delete()
-    editOverlay = null
   }
 }
 MyOverlay.prototype.setRadius = function (radius) {

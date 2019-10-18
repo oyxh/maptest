@@ -1,5 +1,20 @@
 <template>
-    <div :style="{'height':getClientHeight}">统计分析</div>
+    <div :style="{'height':fullWindowPx }">
+      <div :style="{'height':halfClientHeight }">
+        <Table  :columns="columns1" :data="data2">
+        </Table>
+        <Upload action="//jsonplaceholder.typicode.com/posts/">
+          <Button  type="primary" icon="ios-cloud-upload-outline">上传分类数据</Button>
+        </Upload>
+      </div>
+      <div :style="{'height':halfClientHeight }">
+        <Table  :columns="columns1" :data="data2">
+        </Table>
+        <Upload action="//jsonplaceholder.typicode.com/posts/">
+          <Button  type="primary" icon="ios-cloud-upload-outline">导出数据</Button>
+        </Upload>
+      </div>
+    </div>
 </template>
 
 <script>
@@ -15,7 +30,21 @@ export default {
         return clientHeight
       }
       clientHeight = clientHeight - 100
-      return clientHeight + 'px'
+      return clientHeight
+    },
+    halfClientHeight: function () {
+      return this.getClientHeight / 2 + 'px'
+    },
+    fullWindowPx: function () {
+      return this.getClientHeight + 'px'
+    }
+  },
+  data () {
+    return {
+      columns1: [
+      ],
+      data2: [
+      ]
     }
   }
 }

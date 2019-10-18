@@ -355,6 +355,23 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       }
       return this.axios(postconfig)
     },
+    savePolygon: function (myoverlay) {
+      console.log('savePolygon')
+      console.log(myoverlay)
+      var that = this
+      var editMyOverlays = []
+      editMyOverlays.push(myoverlay)
+      this.editGeometrys(editMyOverlays).then(
+        res => {
+          myoverlay._isEdit = 0
+          myoverlay.deleteEditPoint()
+        }
+      ).catch(
+        error => {
+          console.log(error)
+        }
+      )
+    },
     saveLayer: function (e, layerId, index) { // 保存图层  layer为数据，是layerget数组中的单元
       var layer = this.layersget[this.activeLayer]
       var that = this
