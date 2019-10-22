@@ -38,7 +38,7 @@
                   <Icon type="ios-paper" />
                   统计分析
                 </template>
-                <MenuItem name="1-1" @click.native = "handleTest">位置分区</MenuItem>
+                <MenuItem name="1-1" @click.native = "handleTest">地址分区</MenuItem>
                 <MenuItem name="1-2">评论管理</MenuItem>
                 <MenuItem name="1-3">举报管理</MenuItem>
               </Submenu>
@@ -57,7 +57,7 @@
           <Content :style="{padding: '5px', minHeight: '480px', background: '#fff'}">
             <!--<component :is="currentView" keep-alive></component>-->
             <keep-alive>
-              <router-view :is-active = "isActive" ></router-view>
+              <router-view :is-active = "isActive" :is-active-statis = "isActiveStatis"></router-view>
             </keep-alive>
             <!-- 渲染组件 -->
             <!--<MapWindow v-bind:is-active="isActive"></MapWindow>-->
@@ -76,6 +76,7 @@ export default {
   data: function () {
     return {
       isActive: true,
+      isActiveStatis: true,
       currentView: MapWindow
     }
   },
@@ -91,6 +92,7 @@ export default {
     },
     handleTest () {
       this.$router.push({path: '/statis'})
+      this.isActiveStatis = !this.isActiveStatis
       /* this.currentView = StatisWindow */
     }
   }
