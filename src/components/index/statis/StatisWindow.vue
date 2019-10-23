@@ -7,6 +7,7 @@
               <a href="javascript:;" class="uploadfile">选择文件
                 <input type="file" ref="upload" accept=".xls,.xlsx"  name="" id="">
               </a>
+              <Progress :percent="uploadProgress" v-if="progressFlag" :stroke-color="['#108ee9', '#87d068']" />
             </div>
             <div slot="bottom" class="split-pane">
             </div>
@@ -55,7 +56,9 @@ export default {
       split2: 0.5,
       file: null,
       loadingStatus: false,
-      screenHeight: 1000
+      screenHeight: 1000,
+      uploadProgress: 0,
+      progressFlag: false
     }
   },
   mounted () {
@@ -88,14 +91,13 @@ export default {
       this.columnsInput = []
       var that = this
       const files = e.target.files
-      console.log(files)
       if (files.length <= 0) { // 如果没有文件名
         return false
       } else if (!/\.(xls|xlsx)$/.test(files[0].name.toLowerCase())) {
         this.$Message.error('上传格式不正确，请上传xls或者xlsx格式')
         return false
       }
-
+      that.progressFlag = true
       const fileReader = new FileReader()
       fileReader.onload = (ev) => {
         try {
@@ -108,23 +110,22 @@ export default {
           const range = XLSX.utils.decode_range(workbook.Sheets[wsname]['!ref'])
           for (let c = range.s.c; c <= range.e.c; c++) {
             const header = XLSX.utils.encode_col(c) + '1'
-            console.log(header)
-            console.log(workbook.Sheets[wsname][header].v)
             var colName = workbook.Sheets[wsname][header].v
             var headCol = {
               title: colName,
               key: colName
             }
             that.columnsInput.push(headCol)
-            /* ws[header].v = titles[ ws[header].v ] */
           }
-          for (var i = 0; i < ws.length; i++) {
-            that.dataInput.push(ws[i])
-          }
-          // this.$refs.upload.value = ''
+          that.dataInput = ws
+          that.progressFlag = false
         } catch (e) {
           return false
         }
+      }
+      var max = files[0].size
+      fileReader.onprogress = function (evt) {
+        that.uploadProgress = evt.loaded / max * 100
       }
       fileReader.readAsBinaryString(files[0])
     }
