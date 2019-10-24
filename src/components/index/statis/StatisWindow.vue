@@ -8,26 +8,51 @@
                 <input type="file" ref="upload" accept=".xls,.xlsx"  name="" id="">
               </a>
               <p class="pstyle" >
-                选择文件中必须有｛经度、纬度｝或｛X、Y｝或｛lng、lat｝,列数不超过10行，不超过1M
+                <!--选择文件中必须有｛经度、纬度｝或｛X、Y｝或｛lng、lat｝,列数不超过10行，不超过1M-->
+                如果导入数据中有经纬度，请选择坐标
               </p>
-              <Progress :percent="uploadProgress" v-if="progressFlag" :stroke-color="['#108ee9', '#87d068']" />
+              <RadioGroup v-model="maptype">
+                <Radio label="百度" border></Radio>
+                <Radio label="WGS82" border></Radio>
+              </RadioGroup>
+              <Divider dashed />
+              <Select v-model="addressCol" class="select" placeholder = "请选择地址列">
+                <Option v-for="item in this.columnsInput" :value="item.title" :key="item.title">{{ item.title }}</Option>
+              </Select>
+              <br>
+              <br>
+              <Select v-model="lngCol" style="width:200px" placeholder = "请选择经度列">
+                <Option v-for="item in this.columnsInput" :value="item.title" :key="item.title">{{ item.title }}</Option>
+              </Select>
+              <br>
+              <br>
+              <Select v-model="latCol" style="width:200px" placeholder = "请选择纬度列">
+                <Option v-for="item in this.columnsInput" :value="item.title" :key="item.title">{{ item.title }}</Option>
+              </Select>
+              <Divider dashed />
+              <p class="pstyle" >
+                请选择定位优先级：
+              </p>
+              <RadioGroup v-model="positionFirst">
+                <Radio label="地址" border></Radio>
+                <Radio label="经纬度" border></Radio>
+              </RadioGroup>
             </div>
             <div slot="bottom" class="split-pane">
-              <Spin size="large" fix v-if="spinShow"></Spin>
             </div>
           </Split>
         </div>
       </div>
       <div class = "rightsider" :class={active:isActiveStatis}>
         <div class="spin-container"  >
-          <Table  :height="screenHeight/2"  :columns="columnsInput" :data="dataInput">
-
+          <Table  :loading="loading" :height="screenHeight/2"  :columns="columnsInput" :data="dataInput">
           </Table>
-          <Spin size="large" fix v-if="spinShow"></Spin>
-          <!--<Spin size="large" fix v-if="spinShow"></Spin>-->
         </div>
-        <div :style="{'height':halfClientHeight }">
-        </div>
+        <div>test <i-switch v-model="loading"></i-switch></div>
+
+<!--        <div :style="{'height':halfClientHeight }">
+
+        </div>-->
         <!--<Spin size="large" fix v-if="spinShow"></Spin>-->
       </div>
     </div>
@@ -68,9 +93,12 @@ export default {
       file: null,
       loadingStatus: false,
       screenHeight: 1000,
-      uploadProgress: 0,
-      progressFlag: false,
-      spinShow: false
+      loading: false,
+      maptype: '百度',
+      addressCol: '',
+      lngCol: '',
+      latCol: '',
+      positionFirst: ''
     }
   },
   mounted () {
@@ -81,88 +109,60 @@ export default {
     console.log(this.screenHeight)
   },
   methods: {
-    handleUpload (file) {
-      this.file = file
-      console.log(file)
-      return false
-    },
-    handleSuccess () {
-      console.log('success')
-    },
-    handleFormatError () {
-      console.log('handleFormatError')
-    },
-    handleMaxSize () {
-      console.log('handleMaxSize')
-    },
-    handleBeforeUpload () {
-      console.log('handleBeforeUpload')
-    },
     readExcel (e) { // 表格导入
-      this.dataInput = []// 清空接收数据
-      this.columnsInput = []
-      var that = this
-      const files = e.target.files
-      var max = files[0].size
-      if (max > 1 * 1024 * 1024) {
-        this.$Message.error('上传文件不能超过2M')
-        return
-      }
-      if (files.length <= 0) { // 如果没有文件名
-        return false
-      } else if (!/\.(xls|xlsx)$/.test(files[0].name.toLowerCase())) {
-        this.$Message.error('上传格式不正确，请上传xls或者xlsx格式')
-        return false
-      }
-      const fileReader = new FileReader()
-      var ws = []
-      fileReader.readAsBinaryString(files[0])
-      fileReader.onloadstart = (ev) => {
-        console.log(`${ev.type}: ${ev.loaded} bytes transferred\n`)
-        that.progressFlag = true
-        that.uploadProgress = 0
-        that.spinShow = true
-      }
-      fileReader.onprogress = function (evt) {
-        that.uploadProgress = evt.loaded / max * 100
-        console.log(`${evt.type}: ${evt.loaded} bytes transferred\n`)
-        if (event.type === 'load') {
-          evt.src = fileReader.result
+      try {
+        this.dataInput = []// 清空接收数据
+        this.columnsInput = []
+        var that = this
+        const files = e.target.files
+        that.loading = true
+        console.log(files)
+        var max = files[0].size
+        if (max > 1 * 1024 * 1024) {
+          this.$Message.error('上传文件不能超过1M')
+          return
         }
-      }
-      fileReader.onloadend = (ev) => {
-        console.log(`${ev.type}: ${ev.loaded} bytes transferred\n`)
-        const data = ev.target.result
-        const workbook = XLSX.read(data, {
-          type: 'binary'
-        })
-        const wsname = workbook.SheetNames[0]// 取第一张表
-        console.log(wsname)
-        ws = XLSX.utils.sheet_to_json(workbook.Sheets[wsname])// 生成json表格内容
-        console.log(ws)
-        const range = XLSX.utils.decode_range(workbook.Sheets[wsname]['!ref'])
-        console.log(range)
-        console.log(workbook.Sheets[wsname])
-        for (let c = range.s.c; c <= range.e.c; c++) {
-          const header = XLSX.utils.encode_col(c) + '1'
-          console.log(header)
-          var colName = workbook.Sheets[wsname][header].v
-          var headCol = {
-            title: colName,
-            key: colName,
-            width: 100
-          }
-          if (c == 1) {
-            headCol['fixed'] = 'left'
-          }
-          that.columnsInput.push(headCol)
+        if (files.length <= 0) { // 如果没有文件名
+          return false
+        } else if (!/\.(xls|xlsx)$/.test(files[0].name.toLowerCase())) {
+          this.$Message.error('上传格式不正确，请上传xls或者xlsx格式')
+          return false
         }
-        that.progressFlag = false
-        console.log('progressFlag', that.progressFlag)
-        that.dataInput = ws
-        that.spinShow = false
-        console.log(that.spinShow)
-        // that.dataInput = ws
+        const fileReader = new FileReader()
+        var ws = []
+        fileReader.readAsBinaryString(files[0])
+        fileReader.onloadend = (ev) => {
+          const data = ev.target.result
+          const workbook = XLSX.read(data, {
+            type: 'binary'
+          })
+          const wsname = workbook.SheetNames[0]// 取第一张表
+          console.log(wsname)
+          ws = XLSX.utils.sheet_to_json(workbook.Sheets[wsname])// 生成json表格内容
+          console.log(ws)
+          const range = XLSX.utils.decode_range(workbook.Sheets[wsname]['!ref'])
+          console.log(range)
+          console.log(workbook.Sheets[wsname])
+          for (let c = range.s.c; c <= range.e.c; c++) {
+            const header = XLSX.utils.encode_col(c) + '1'
+            console.log(header)
+            var colName = workbook.Sheets[wsname][header].v
+            var headCol = {
+              title: colName,
+              key: colName,
+              width: 100
+            }
+            if (c == 1) {
+              headCol['fixed'] = 'left'
+            }
+            that.columnsInput.push(headCol)
+          }
+          that.dataInput = ws
+          that.loading = false
+          console.log(that.loading)
+        }
+      } catch (err) {
+        console.log(err)
       }
     }
   }
@@ -173,6 +173,10 @@ export default {
   .pstyle{
     font-family:Simsun;
     font-size:10px;
+  }
+  .select {
+    width: 200px;
+    color: #555;
   }
   .leftsider{
     width: 230px;
@@ -192,7 +196,7 @@ export default {
     margin-left: 0px;
   }
   .split{
-    height: 400px;
+    height: 800px;
     border: 1px solid #dcdee2;
   }
   .split-pane{
