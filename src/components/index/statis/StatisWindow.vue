@@ -33,10 +33,12 @@
               <p class="pstyle" >
                 请选择定位优先级：
               </p>
-              <RadioGroup v-model="positionFirst">
+              <RadioGroup v-model="locationFirst">
                 <Radio label="地址" border></Radio>
                 <Radio label="经纬度" border></Radio>
               </RadioGroup>
+              <Divider dashed />
+              <Button type="primary" ghost @click = "locationPoints">定位</Button>
             </div>
             <div slot="bottom" class="split-pane">
             </div>
@@ -49,11 +51,6 @@
           </Table>
         </div>
         <div>test <i-switch v-model="loading"></i-switch></div>
-
-<!--        <div :style="{'height':halfClientHeight }">
-
-        </div>-->
-        <!--<Spin size="large" fix v-if="spinShow"></Spin>-->
       </div>
     </div>
 </template>
@@ -62,7 +59,7 @@
 /* eslint-disable eqeqeq */
 
 import XLSX from 'xlsx'
-
+import LayerItems from '../map/LayerItems.vue'
 export default {
   props: ['isActiveStatis'],
   name: 'StatisWindow',
@@ -98,7 +95,7 @@ export default {
       addressCol: '',
       lngCol: '',
       latCol: '',
-      positionFirst: ''
+      locationFirst: '地址'
     }
   },
   mounted () {
@@ -164,6 +161,17 @@ export default {
       } catch (err) {
         console.log(err)
       }
+    },
+    locationPoints () {
+      console.log('locationPoints')
+      console.log(this.addressCol)
+      console.log(this.latCol)
+      console.log(this.lngCol)
+      console.log(this.maptype)
+      console.log(this.locationFirst)
+      console.log(LayerItems)
+      console.log(LayerItems.data().layersget)
+      console.log(LayerItems.data().geometrysInLayer)
     }
   }
 }
@@ -196,7 +204,7 @@ export default {
     margin-left: 0px;
   }
   .split{
-    height: 800px;
+    height: 1200px;
     border: 1px solid #dcdee2;
   }
   .split-pane{
