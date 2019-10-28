@@ -10,7 +10,6 @@ function Mask (map, geometrysInLayer, overlayMap, layerItem) {
 }
 Mask.prototype.initialize = function () {
   this._map.addEventListener('zoomend', this.zoomAction.bind(this))
-  // this.setFocus(this.layersget[0].layerId)
 }
 Mask.prototype.addBackground = function (layer) {
   var layerData = layer.layerData
@@ -127,6 +126,7 @@ Mask.prototype.addGridZone = function (gridPoly, layer) {
   if (layer !== undefined) {
     myOverlays.setAddFlag(1)
   }
+  // this.$store.commit('geometrysInLayerAdd', layerId, myOverlays)
   this._geometrysInLayer[layerId].add(myOverlays)
 }
 Mask.prototype.getCircleRadius = function () {

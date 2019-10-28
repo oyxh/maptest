@@ -163,15 +163,10 @@ export default {
       }
     },
     locationPoints () {
-      console.log('locationPoints')
-      console.log(this.addressCol)
-      console.log(this.latCol)
-      console.log(this.lngCol)
-      console.log(this.maptype)
-      console.log(this.locationFirst)
       console.log(LayerItems)
-      console.log(LayerItems.data().layersget)
-      console.log(LayerItems.data().geometrysInLayer)
+      console.log(this.$store.getters.geometrysInLayer)
+      // this.$store.commit('geometrysInLayerAdd', 12)
+      console.log(this.$store.getters.geometrysInLayer)
     }
   }
 }

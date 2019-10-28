@@ -69,7 +69,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       layersget: [], // 所有图层
       geometrys: [], // 所有覆盖几何物体 来自数据库的数据
       plyzones: [], // 实体区域，每个区域包括一个或几个多边形区域
-      geometrysInLayer: { },
+      geometrysInLayer: this.$store.getters.geometrysInLayer,
       data2: [],
       drawTool: null,
       importData: false,
