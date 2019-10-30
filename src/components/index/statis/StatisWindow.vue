@@ -38,6 +38,10 @@
                 <Radio label="经纬度" border></Radio>
               </RadioGroup>
               <Divider dashed />
+              <Select v-model="layerSelect" style="width:200px" placeholder = "请选择分区图层">
+                <Option v-for="(item,index) in this.layersget" :value="item.layerId" :key="item.layerId">{{ item.layerName+ index }}</Option>
+              </Select>
+              <Divider dashed />
               <Button type="primary" ghost @click = "locationPoints">定位</Button>
             </div>
             <div slot="bottom" class="split-pane">
@@ -95,7 +99,9 @@ export default {
       addressCol: '',
       lngCol: '',
       latCol: '',
-      locationFirst: '地址'
+      locationFirst: '地址',
+      layerSelect: '',
+      layersget: this.$store.getters.layersget // 数据分区
     }
   },
   mounted () {
@@ -167,6 +173,7 @@ export default {
       console.log(this.$store.getters.geometrysInLayer)
       // this.$store.commit('geometrysInLayerAdd', 12)
       console.log(this.$store.getters.geometrysInLayer)
+      console.log(this.$store.getters.layersget)
     }
   }
 }

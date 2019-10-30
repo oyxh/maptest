@@ -66,7 +66,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       activeLayer: 0,
       overlayMap: null,
       value2: false,
-      layersget: [], // 所有图层
+      layersget: this.$store.getters.layersget, // 所有图层
       geometrys: [], // 所有覆盖几何物体 来自数据库的数据
       plyzones: [], // 实体区域，每个区域包括一个或几个多边形区域
       geometrysInLayer: this.$store.getters.geometrysInLayer,
@@ -112,7 +112,10 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       }
       this.axios.all([that.axiosRequest(postconfig), that.axiosRequest(postconfig1)])
         .then(this.axios.spread(function (acct, perms) {
-          that.layersget = acct.data
+          // that.layersget = acct.data
+          for (var item of acct.data) {
+            that.layersget.push(item)
+          }
           that.geometrys = perms.data
           that.initPage()
         })).catch(error => {

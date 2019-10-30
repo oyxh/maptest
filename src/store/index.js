@@ -8,7 +8,8 @@ Vue.use(Vuex)
 const state = {
   layerRefresh: false,
   radius: 0,
-  geometrysInLayer: { }
+  geometrysInLayer: { },
+  layersget: []
 }
 const getters = { // 实时监听state值的变化(最新状态)
   layerRefresh (state) {
@@ -16,6 +17,9 @@ const getters = { // 实时监听state值的变化(最新状态)
   },
   radius (state) {
     return state.radius
+  },
+  layersget (state) {
+    return state.layersget
   },
   geometrysInLayer (state) {
     return state.geometrysInLayer
