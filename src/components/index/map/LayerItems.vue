@@ -24,7 +24,7 @@
         </label>
         <input  type="checkbox" value="checked" >
         <button type="success"  class="closeButton" @click=deleteLayer($event,layer,index)>&times;</button><br>
-        <label>图层背景:{{layer.layerGround}}</label>
+        <label>图层背景:{{layer.layerDes}}</label>
       </div>
       <div>
         <button type="success" class ="buttonLeft"  @click="value2 = true" >选择区域</button>
@@ -263,9 +263,9 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
         this.$Message.info('没有选择背景图层')
       } else {
         var backcounty = this.$refs.tree.getSelectedNodes()[0].title
-        if (backcounty !== this.layersget[this.activeLayer].layerGround) {
+        if (backcounty !== this.layersget[this.activeLayer].layerDes) {
           var that = this
-          this.layersget[this.activeLayer].layerGround = backcounty
+          // this.layersget[this.activeLayer].layerDes = backcounty
           this.$Modal.confirm({
             title: '背景变化',
             content: '即将更改背景区域，请确定',
@@ -288,6 +288,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
           alert('未能获取当前输入行政区域')
         }
         layer.layerData = rs.boundaries
+        layer.layerDes = backcounty
         me.mask.addBackground(layer)
         me.mask.setFocus(layer)
       })

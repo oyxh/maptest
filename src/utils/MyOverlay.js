@@ -118,6 +118,13 @@ MyOverlay.prototype.delete = function () {
   }
   this.deleteEditPoint()
 }
+MyOverlay.prototype.redrawGeometrys = function () {
+  for (let [overlay] of this._overlayLabels) {
+    this._map.removeOverlay(overlay)
+    this._map.addOverlay(overlay)
+  }
+  this.deleteEditPoint()
+}
 MyOverlay.prototype.deleteEditPoint = function () {
   for (let editOverlay of this._editOverlays.values()) {
     editOverlay.delete()

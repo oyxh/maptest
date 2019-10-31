@@ -34,6 +34,12 @@ Mask.prototype.addBackground = function (layer) {
   }
   this._overlayMap.set(layer, backgroundPly)
   this._map.setViewport(pointArray)
+  var myOverlaysSet = this._geometrysInLayer[layer.layerId]
+  if (myOverlaysSet !== undefined) {
+    for (let myOverlay of myOverlaysSet) {
+      myOverlay.redrawGeometrys()
+    }
+  }
 }
 Mask.prototype.deleteOverlays = function (layerId) { // 删除 layserId上的所有覆盖5️⃣
 }
