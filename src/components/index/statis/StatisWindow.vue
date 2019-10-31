@@ -174,6 +174,7 @@ export default {
       // this.$store.commit('geometrysInLayerAdd', 12)
       console.log(this.$store.getters.geometrysInLayer)
       console.log(this.$store.getters.layersget)
+      console.log(this.$store.getters.map)
     }
   }
 }

@@ -70,8 +70,8 @@ export default {
       })
         .then((response) => {
           if (response.status === 200) {
-            this.$store.commit('SET_TOKEN', response.data.token)
-            this.$store.commit('GET_USER', response.data.user)
+            // this.$store.commit('SET_TOKEN', response.data.token)
+            // this.$store.commit('GET_USER', response.data.user)
             /*            this.$message({
               message: '登陆成功',
               type: 'success'

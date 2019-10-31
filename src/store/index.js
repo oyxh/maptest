@@ -9,7 +9,8 @@ const state = {
   layerRefresh: false,
   radius: 0,
   geometrysInLayer: { },
-  layersget: []
+  layersget: [],
+  map: null
 }
 const getters = { // 实时监听state值的变化(最新状态)
   layerRefresh (state) {
@@ -23,6 +24,9 @@ const getters = { // 实时监听state值的变化(最新状态)
   },
   geometrysInLayer (state) {
     return state.geometrysInLayer
+  },
+  map (state) {
+    return state.map
   }
 }
 const mutations = {
@@ -37,6 +41,9 @@ const mutations = {
       state.geometrysInLayer[id] = new Set()
     }
     state.geometrysInLayer[id].add(myOverlay)
+  },
+  map (state, map) { // 自定义改变state初始值的方法，这里面的参数除了state之外还可以再传额外的参数(变量或对象);
+    state.map = map
   }
 }
 
@@ -49,6 +56,9 @@ const actions = {
   },
   geometrysInLayerAdd (context, id, myOverlay) {
     context.commit('geometrysInLayerAdd', id, myOverlay)
+  },
+  map (context, map) { // 自定义改变state初始值的方法，这里面的参数除了state之外还可以再传额外的参数(变量或对象);
+    context.commit('map', map)
   }
 }
 export default new Vuex.Store({
