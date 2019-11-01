@@ -39,7 +39,7 @@
               </RadioGroup>
               <Divider dashed />
               <Select v-model="layerSelect" style="width:200px" placeholder = "请选择分区图层">
-                <Option v-for="(item,index) in this.layersget" :value="item.layerId" :key="item.layerId">{{ item.layerName+'-'+ index }}</Option>
+                <Option v-for="(item,index) in this.layersget" :value="item.layerDes" :key="item.layerId">{{ item.layerName+'-'+ index }}</Option>
               </Select>
               <Divider dashed />
               <Button type="primary" ghost @click = "locationPoints">定位</Button>
@@ -175,6 +175,7 @@ export default {
       console.log(this.$store.getters.geometrysInLayer)
       console.log(this.$store.getters.layersget)
       console.log(this.$store.getters.map)
+      console.log(this.layerSelect)
       var myGeo = new window.BMap.Geocoder()
       for (let item of this.dataInput) {
         console.log(this.addressCol)
@@ -184,7 +185,7 @@ export default {
             console.log(point)
             // var address = new window.BMap.Point(point.lng, point.lat)
           }
-        }, '合肥市')
+        }, this.layerSelect)
       }
     }
   }
