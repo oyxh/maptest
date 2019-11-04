@@ -360,13 +360,12 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       return this.axios(postconfig)
     },
     savePolygon: function (myoverlay) {
-      console.log('savePolygon')
-      console.log(myoverlay)
       var that = this
       var editMyOverlays = []
       editMyOverlays.push(myoverlay)
       this.editGeometrys(editMyOverlays).then(
         res => {
+          that.$Message.info('保存成功')
           myoverlay._isEdit = 0
           myoverlay.deleteEditPoint()
         }
