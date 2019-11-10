@@ -2,11 +2,12 @@
     <div :style="{'height':fullWindowPx }">
       <div class="leftsider" :class={active:isActiveStatis} >
         <div class="split">
-          <Split v-model="split2" mode="vertical">
             <div slot="top" class="split-pane ">
+              <br>
               <a href="javascript:;" class="uploadfile">选择文件
                 <input type="file" ref="upload" accept=".xls,.xlsx"  name="" id="">
               </a>
+              <Button class="uploadbutton" @click = "clearData">清除数据</Button>
               <p class="pstyle" >
                 <!--选择文件中必须有｛经度、纬度｝或｛X、Y｝或｛lng、lat｝,列数不超过10行，不超过1M-->
                 如果导入数据中有经纬度，请选择坐标
@@ -46,15 +47,15 @@
             </div>
             <div slot="bottom" class="split-pane">
             </div>
-          </Split>
         </div>
       </div>
-      <div class = "rightsider" :class={active:isActiveStatis}>
+      <div class = "rightsider" :class={active:isActiveStatis} >
         <div class="spin-container"  >
-          <Table  :loading="loading" :height="screenHeight/2"  :columns="columnsInput" :data="dataInput">
+          <Table border :loading="loading" :height="screenHeight/2"  :columns="columnsInput" :data="dataInput" ref="table">
           </Table>
         </div>
         <div>test <i-switch v-model="loading"></i-switch></div>
+        <Button type="primary" size="large" @click="exportData(1)"><Icon type="ios-download-outline"></Icon> 导出数据</Button>
       </div>
     </div>
 </template>
@@ -63,7 +64,6 @@
 /* eslint-disable eqeqeq */
 
 import XLSX from 'xlsx'
-import LayerItems from '../map/LayerItems.vue'
 export default {
   props: ['isActiveStatis'],
   name: 'StatisWindow',
@@ -75,6 +75,7 @@ export default {
         return clientHeight
       }
       clientHeight = clientHeight - 100
+      console.log(clientHeight)
       return clientHeight
     },
     halfClientHeight: function () {
@@ -116,19 +117,22 @@ export default {
       try {
         this.dataInput = []// 清空接收数据
         this.columnsInput = []
+        var files = null
         var that = this
-        const files = e.target.files
+        files = e.target.files
         that.loading = true
         console.log(files)
         var max = files[0].size
         if (max > 1 * 1024 * 1024) {
           this.$Message.error('上传文件不能超过1M')
+          that.loading = false
           return
         }
         if (files.length <= 0) { // 如果没有文件名
           return false
         } else if (!/\.(xls|xlsx)$/.test(files[0].name.toLowerCase())) {
           this.$Message.error('上传格式不正确，请上传xls或者xlsx格式')
+          that.loading = false
           return false
         }
         const fileReader = new FileReader()
@@ -152,8 +156,8 @@ export default {
             var colName = workbook.Sheets[wsname][header].v
             var headCol = {
               title: colName,
-              key: colName,
-              width: 100
+              key: colName
+              /* width: 100 */
             }
             if (c == 1) {
               headCol['fixed'] = 'left'
@@ -162,40 +166,130 @@ export default {
           }
           that.dataInput = ws
           that.loading = false
+          console.log(that.$refs.upload.value)
           console.log(that.loading)
         }
       } catch (err) {
+        that.loading = false
         console.log(err)
       }
     },
+    exportData (type) {
+      if (type === 1) {
+        this.$refs.table.exportCsv({
+          filename: 'exportdata_new'
+        })
+      }
+    },
+    clearData () {
+      this.dataInput = []// 清空接收数据
+      this.columnsInput = []
+      this.$refs.upload.value = null
+    },
     locationPoints () {
-      console.log(LayerItems)
-      console.log(this.$store.getters.geometrysInLayer)
-      // this.$store.commit('geometrysInLayerAdd', 12)
-      console.log(this.$store.getters.geometrysInLayer)
-      console.log(this.$store.getters.layersget)
-      console.log(this.$store.getters.map)
-      console.log(this.layerSelect)
+      if (!this.loading) {
+        this.loading = true
+        setTimeout(this.locationPointsEx, 500)
+      } else {
+        this.$Message.error('正在执行')
+      }
+
+      // this.locationPointsEx()
+    },
+    locationPointsEx () {
+      var that = this
       var layers = this.$store.getters.layersget[this.layerSelect]
       var geometrys = this.$store.getters.geometrysInLayer[layers.layerId]
-      console.log(layers)
-      console.log(geometrys)
-      var myGeo = new window.BMap.Geocoder()
-      for (let item of this.dataInput) {
-        console.log(this.addressCol)
-        console.log(item[this.addressCol])
-        myGeo.getPoint(item[this.addressCol], point => {
-          if (point) {
-            console.log(item[this.addressCol], point.lng + ',' + point.lat, this.layerSelect)
-          }
-        }, layers.layerDes)
+      if (geometrys == undefined) {
+        geometrys = []
       }
-    /*  function (point) {
-        if (point) {
-          console.log(point)
-          // var address = new window.BMap.Point(point.lng, point.lat)
+      console.log(that.maptype)
+      console.log(this.addressCol)
+      console.log(this.lngCol)
+      console.log(this.latCol)
+      console.log(this.locationFirst)
+      var myGeo = new window.BMap.Geocoder()
+      var hasZone = false
+      for (var prop of this.columnsInput) {
+        if (prop.title == '归属区域') {
+          hasZone = true
+          break
         }
-      } */
+      }
+      if (!hasZone) {
+        var newCol = {
+          title: '归属区域',
+          key: '归属区域'
+          /* width: 100 */
+        }
+        this.columnsInput.push(newCol)
+      }
+      var itemEnd = this.dataInput[this.dataInput.length - 1]
+      console.log(myGeo)
+      console.log(itemEnd)
+      var itemIndex = 0
+      for (let item of this.dataInput) {
+        item['归属区域'] = ''
+        var oriPoint = new window.BMap.Point(item[this.lngCol], item[this.latCol])
+        var p1 = new Promise(function (resolve, reject) {
+          console.log('start new Promise...')
+          if (that.maptype !== '百度') {
+            var convertor = new window.BMap.Convertor()
+            var pointArr = []
+            pointArr.push(oriPoint)
+            convertor.translate(pointArr, 1, 5, function (data) {
+              if (data.status === 0) {
+                console.log(data.points[0])
+                resolve(data.points[0])
+              }
+            })
+          } else {
+            resolve(oriPoint)
+          }
+        })
+        var p2 = new Promise(function (resolve, reject) {
+          console.log('start new Promise2...')
+          console.log(item)
+          console.log(item[that.addressCol])
+          myGeo.getPoint(item[that.addressCol], point => {
+            console.log('test')
+            if (point) {
+              console.log(point)
+              resolve(point)
+            }
+          }, layers.layerDes)
+        })
+        var isRightPoint = function (point) {
+          if (point.lng == 0 || point.lat == 0) {
+            return false
+          }
+          return true
+        }
+        Promise.all([p1, p2]).then(function (results) {
+          console.log(results) // 获得一个Array: ['P1', 'P2']
+          var point = that.locationFirst == '经纬度' ? results[0] : results[1]
+          var pointBei = that.locationFirst == '地址' ? results[0] : results[1]
+          if (!isRightPoint(point)) {
+            point = pointBei
+          }
+          for (var geometry of geometrys) {
+            if (geometry.contains(point)) {
+              item['归属区域'] = geometry._gridPoly.geometryName || {}
+              console.log(item['归属区域'], point)
+            }
+          }
+          console.log(itemIndex)
+          // that.dataInput.splice(itemIndex, 1, item)
+          if (item == itemEnd) {
+            that.loading = false
+            that.dataInput.pop()
+            setTimeout(function () {
+              that.dataInput.push(item)
+            }, 2000)
+          }
+        })
+        itemIndex++
+      }
     }
   }
 }
@@ -228,11 +322,19 @@ export default {
     margin-left: 0px;
   }
   .split{
-    height: 1200px;
+   /* height: 1200px;*/
     border: 1px solid #dcdee2;
   }
   .split-pane{
     padding: 10px;
+  }
+  .uploadbutton{
+    display: inline-block;
+    background: #D0EEFF;
+    border: 1px solid #99D3F5;
+    border-radius: 4px;
+    padding: 4px 12px;
+    float:right;
   }
   .uploadfile {
     position: relative;

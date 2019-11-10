@@ -9,6 +9,7 @@ function MyOverlay (gridPoly, mask) {
   this._isAdd = 0 // 0 原有，1 添加
   this._editOverlays = new Map()
   this._overlayLabels = new Map()
+  this._polygons = new Map()
   if (this._gridPoly.isBackground !== 'BD09') {
     this._isEdit = 1
     this._gridPoly.isBackground = 'BD09'
@@ -91,6 +92,7 @@ MyOverlay.prototype.oneOverlayLabel = function (overlay) {
   overlayLabel.draw()
   overlayLabel.show()
   this._overlayLabels.set(overlay, overlayLabel)
+  this._polygons.set(overlay, polygon)
 }
 MyOverlay.prototype.hide = function () {
   for (let [overlay, overlayLabel] of this._overlayLabels) {
@@ -134,5 +136,15 @@ MyOverlay.prototype.setRadius = function (radius) {
   for (let editOverlay of this._editOverlays.values()) {
     editOverlay.setRadius(radius)
   }
+}
+MyOverlay.prototype.contains = function (point) {
+  var containFlag = false
+  for (let polygon of this._polygons.values()) {
+    if (polygon.contains({x: point.lng, y: point.lat})) {
+      containFlag = true
+      return containFlag
+    }
+  }
+  return containFlag
 }
 export default MyOverlay
