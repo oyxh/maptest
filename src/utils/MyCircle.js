@@ -34,6 +34,7 @@ MyCircle.prototype.startAction = function (e) {
   }
 }
 MyCircle.prototype.endAction = function (e) {
+  console.log(this)
   this._editOverlay.endEdit(this)
   this._circle.removeEventListener('click', this.startAction.bind(this))
   this._startFlag = false

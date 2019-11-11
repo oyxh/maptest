@@ -90,26 +90,43 @@ EditOverlay.prototype.deletePoint = function (mycircle) {
   this._map.addOverlay(newMiddle._circle)
   this.redrawPolygon()
 }
+EditOverlay.prototype.moveAction = function (e) {
+  console.log('moveaction')
+  console.log(this)
+  console.log('mycircle')
+  console.log(e)
+  /* var me = this
+  var insect = me._mask.nearPoint(e.point, mycircle._circle.getRadius() * 2, me)
+  var replacePoint = e.point
+  if (insect instanceof window.BMap.Point) {
+    replacePoint = insect
+  }
+  var index = me.getIndex(mycircle)
+  console.log(index)
+  me.replacePoint(index, mycircle, replacePoint)
+  me.redrawPolygon() */
+}
 EditOverlay.prototype.editPoint = function (mycircle) {
   this._map.disableDoubleClickZoom()
-  var me = this
-  this._moveAction = function (e) {
+  /*  this._moveAction = function (e) {
     var insect = me._mask.nearPoint(e.point, mycircle._circle.getRadius() * 2, me)
     var replacePoint = e.point
     if (insect instanceof window.BMap.Point) {
       replacePoint = insect
     }
     var index = me.getIndex(mycircle)
+    console.log(index)
     me.replacePoint(index, mycircle, replacePoint)
     me.redrawPolygon()
-  }
+  } */
+  console.log(mycircle)
   if (!this._mousemoveFlag) {
     this._mousemoveFlag = true
-    this._map.addEventListener('mousemove', this._moveAction)
+    this._map.addEventListener('mousemove', this.moveAction)
   }
 }
-EditOverlay.prototype.replacePoint = function (index1, mycircle, point) { // 替换节点,点击后变化，分点击节点和点击中点
-  var index = this.getIndex(mycircle)
+EditOverlay.prototype.replacePoint = function (index, mycircle, point) { // 替换节点,点击后变化，分点击节点和点击中点
+  // var index = this.getIndex(mycircle)
   var pointLength = this._pointArray.length
   var pre = (index - 1 + pointLength) % pointLength
   var next = (index + 1) % pointLength
@@ -144,7 +161,9 @@ EditOverlay.prototype.replacePoint = function (index1, mycircle, point) { // 替
   }
 }
 EditOverlay.prototype.endEdit = function (mycircle) {
-  this._map.removeEventListener('mousemove', this._moveAction)
+  console.log('end move', this._mousemoveFlag)
+  console.log(this.moveAction)
+  this._map.removeEventListener('mousemove', this.moveAction)
   this._mousemoveFlag = false
 }
 EditOverlay.prototype.setRadius = function (radius) {

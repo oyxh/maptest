@@ -56,7 +56,50 @@ MyOverlay.prototype.editClose = function (e, ee) {
   console.log('editClose')
 }
 MyOverlay.prototype.editName = function (e, ee, polygon) {
-
+  var that = this
+  this._mask._layerItem.$Modal.confirm({
+    title: '请输入网格信息：',
+    render: (h) => {
+      const inputData = [{
+        domProps: {
+          value: that._gridPoly.geometryName,
+          autofocus: true,
+          style: 'color:red;width:100%;margin-bottom:8px'
+        },
+        on: {
+          input: (val) => {
+            if (val.target.value !== that._gridPoly.geometryName) {
+              that._labelName = that._gridPoly.geometryName = val.target.value
+              that._isEdit = true
+            }
+          }
+        }
+      },
+      {
+        domProps: {
+          value: that._gridPoly.geometryDes,
+          autofocus: true,
+          placeholder: '请输入网格负责人...',
+          style: 'color:red;width:100%'
+        },
+        on: {
+          input: (val) => {
+            if (val.target.value !== that._gridPoly.geometryDes) {
+              that._gridPoly.geometryDes = val.target.value
+              that._isEdit = true
+            }
+          }
+        }
+      }
+      ]
+      return h('div', inputData.map(item => h('input', item)))
+    },
+    onOk: function () {
+      that.showLabel() // 变更名字
+    },
+    onCancel: function () {
+    }
+  })
 }
 MyOverlay.prototype.mouseover = function (e) {
   this._activePly = e.target
@@ -84,6 +127,10 @@ MyOverlay.prototype.showLabel = function () { // 显示多边形的名字
   }
 }
 MyOverlay.prototype.oneOverlayLabel = function (overlay) {
+  var orioverLabel = this._overlayLabels.get(overlay)
+  if (orioverLabel !== undefined) {
+    this._map.removeOverlay(orioverLabel)
+  }
   var pointArray = overlay.getPath()
   var polygon = new MyPolygon(pointArray, this._map)
   var labelPositoin = polygon.getSevaralPoint(this._labelName.length)
