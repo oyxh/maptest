@@ -121,7 +121,6 @@ export default {
         var that = this
         files = e.target.files
         that.loading = true
-        console.log(files)
         var max = files[0].size
         if (max > 1 * 1024 * 1024) {
           this.$Message.error('上传文件不能超过1M')
@@ -144,15 +143,10 @@ export default {
             type: 'binary'
           })
           const wsname = workbook.SheetNames[0]// 取第一张表
-          console.log(wsname)
           ws = XLSX.utils.sheet_to_json(workbook.Sheets[wsname])// 生成json表格内容
-          console.log(ws)
           const range = XLSX.utils.decode_range(workbook.Sheets[wsname]['!ref'])
-          console.log(range)
-          console.log(workbook.Sheets[wsname])
           for (let c = range.s.c; c <= range.e.c; c++) {
             const header = XLSX.utils.encode_col(c) + '1'
-            console.log(header)
             var colName = workbook.Sheets[wsname][header].v
             var headCol = {
               title: colName,
@@ -166,8 +160,6 @@ export default {
           }
           that.dataInput = ws
           that.loading = false
-          console.log(that.$refs.upload.value)
-          console.log(that.loading)
         }
       } catch (err) {
         that.loading = false
@@ -203,11 +195,6 @@ export default {
       if (geometrys == undefined) {
         geometrys = []
       }
-      console.log(that.maptype)
-      console.log(this.addressCol)
-      console.log(this.lngCol)
-      console.log(this.latCol)
-      console.log(this.locationFirst)
       var myGeo = new window.BMap.Geocoder()
       var hasZone = false
       for (var prop of this.columnsInput) {
@@ -225,21 +212,16 @@ export default {
         this.columnsInput.push(newCol)
       }
       var itemEnd = this.dataInput[this.dataInput.length - 1]
-      console.log(myGeo)
-      console.log(itemEnd)
-      var itemIndex = 0
       for (let item of this.dataInput) {
         item['归属区域'] = ''
         var oriPoint = new window.BMap.Point(item[this.lngCol], item[this.latCol])
         var p1 = new Promise(function (resolve, reject) {
-          console.log('start new Promise...')
           if (that.maptype !== '百度') {
             var convertor = new window.BMap.Convertor()
             var pointArr = []
             pointArr.push(oriPoint)
             convertor.translate(pointArr, 1, 5, function (data) {
               if (data.status === 0) {
-                console.log(data.points[0])
                 resolve(data.points[0])
               }
             })
@@ -248,13 +230,8 @@ export default {
           }
         })
         var p2 = new Promise(function (resolve, reject) {
-          console.log('start new Promise2...')
-          console.log(item)
-          console.log(item[that.addressCol])
           myGeo.getPoint(item[that.addressCol], point => {
-            console.log('test')
             if (point) {
-              console.log(point)
               resolve(point)
             }
           }, layers.layerDes)
@@ -266,7 +243,6 @@ export default {
           return true
         }
         Promise.all([p1, p2]).then(function (results) {
-          console.log(results) // 获得一个Array: ['P1', 'P2']
           var point = that.locationFirst == '经纬度' ? results[0] : results[1]
           var pointBei = that.locationFirst == '地址' ? results[0] : results[1]
           if (!isRightPoint(point)) {
@@ -274,21 +250,20 @@ export default {
           }
           for (var geometry of geometrys) {
             if (geometry.contains(point)) {
+              console.log(geometry._gridPoly.geometryName)
               item['归属区域'] = geometry._gridPoly.geometryName || {}
-              console.log(item['归属区域'], point)
             }
           }
-          console.log(itemIndex)
+          console.log(item)
           // that.dataInput.splice(itemIndex, 1, item)
-          if (item == itemEnd) {
-            that.loading = false
-            that.dataInput.pop()
-            setTimeout(function () {
-              that.dataInput.push(item)
-            }, 2000)
-          }
         })
-        itemIndex++
+        if (item == itemEnd) {
+          that.loading = false
+          that.dataInput.pop()
+          setTimeout(function () {
+            that.dataInput.push(item)
+          }, 2000)
+        }
       }
     }
   }

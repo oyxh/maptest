@@ -86,8 +86,10 @@ EditOverlay.prototype.deletePoint = function (mycircle) {
   var newMiddle = new MyCircle(this._map, middle, radius, 'middle', this)
   this._pointArray.splice(index, 1)
   this._pointCircles.splice(index, 1)
-  this._middleArray.splice(pre, 2, middle)
-  this._middleCircles.splice(pre, 2, newMiddle)
+  this._middleArray.splice(pre, 1, middle)
+  this._middleArray.splice(index, 1)
+  this._middleCircles.splice(pre, 1, newMiddle)
+  this._middleCircles.splice(index, 1)
   this._map.addOverlay(newMiddle._circle)
   this.redrawPolygon()
 }
@@ -112,11 +114,6 @@ EditOverlay.prototype.editPoint = function (mycircle) {
   console.log(this._curCircle)
   console.log(this._mousemoveFlag)
   this._map.addEventListener('mousemove', this._moveAction)
-  // if (!this._mousemoveFlag) {
-  //   this._mousemoveFlag = true
-  //   this._map.addEventListener('mousemove', this._moveAction)
-  //   this._moveAction = null
-  // }
 }
 EditOverlay.prototype.replacePoint = function (index, mycircle, point) { // 替换节点,点击后变化，分点击节点和点击中点
   var pointLength = this._pointArray.length

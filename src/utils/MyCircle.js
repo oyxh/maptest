@@ -21,24 +21,26 @@ MyCircle.prototype.initialize = function () {
     this._circle.addContextMenu(markerMenu)
   }
   this._circle.addEventListener('click', this.startAction.bind(this))
+  this._circle.addEventListener('dblclick', this.endAction.bind(this))
 }
 MyCircle.prototype.deletePoint = function (e, ee) {
   this._editOverlay.deletePoint(this)
 }
 MyCircle.prototype.startAction = function (e) {
   console.log(this._startFlag, 'startAction')
-  this._circle.addEventListener('dblclick', this.endAction.bind(this))
-  if (!this._startFlag) {
+  // this._circle.addEventListener('dblclick', this.endAction.bind(this))
+  this._editOverlay.editPoint(this)
+/*  if (!this._startFlag) {
     this._startFlag = true
     this._editOverlay.editPoint(this)
-  }
+  } */
 }
 MyCircle.prototype.endAction = function (e) {
   console.log(this)
   this._editOverlay.endEdit(this)
-  this._circle.removeEventListener('click', this.startAction.bind(this))
+  // this._circle.removeEventListener('click', this.startAction.bind(this))
   this._startFlag = false
-  this._circle.removeEventListener('dblclick', this.endAction.bind(this))
+  // this._circle.removeEventListener('dblclick', this.endAction.bind(this))
 }
 MyCircle.prototype.setRadius = function (radius) {
   this._radius = (this._type == 'point') ? radius : radius * 0.9
