@@ -64,6 +64,7 @@
 /* eslint-disable eqeqeq */
 
 import XLSX from 'xlsx'
+import Convertor from '../../../utils/Convertor'
 export default {
   props: ['isActiveStatis'],
   name: 'StatisWindow',
@@ -144,6 +145,7 @@ export default {
           })
           const wsname = workbook.SheetNames[0]// 取第一张表
           ws = XLSX.utils.sheet_to_json(workbook.Sheets[wsname])// 生成json表格内容
+          console.log(ws)
           const range = XLSX.utils.decode_range(workbook.Sheets[wsname]['!ref'])
           for (let c = range.s.c; c <= range.e.c; c++) {
             const header = XLSX.utils.encode_col(c) + '1'
@@ -177,6 +179,7 @@ export default {
       this.dataInput = []// 清空接收数据
       this.columnsInput = []
       this.$refs.upload.value = null
+      this.loading = false
     },
     locationPoints () {
       if (!this.loading) {
@@ -188,14 +191,91 @@ export default {
 
       // this.locationPointsEx()
     },
-    locationPointsEx () {
+    getPointFromCross (convertor, oriPoint, index) {
+      var that = this
+      return new Promise(function (resolve, reject) {
+        // resolve(oriPoint)
+        if (that.maptype == 'WGS84') {
+          var pointArr = []
+          pointArr.push(oriPoint)
+          // var convertor = new window.BMap.Convertor()
+          /* setTimeout(function () {
+            resolve(oriPoint)
+          }, 10500) */
+          console.log('index', index, pointArr)
+          setTimeout(convertor.translate(pointArr, 1, 5, function (data) {
+            console.log(oriPoint, data, index)
+            if (data.status === 0) {
+              resolve(data.points[0])
+            } else {
+              resolve(oriPoint)
+            }
+          }), 1500)
+        } else {
+          resolve(oriPoint)
+        }
+      })
+    },
+    getPointFromAdress (myGeo, layers, address) {
+      return new Promise(function (resolve, reject) {
+        resolve(null)
+        /* myGeo.getPoint(address, point => {
+          if (point) {
+            resolve(point)
+          } else {
+            resolve(null)
+          }
+        }, layers.layerDes) */
+      })
+    },
+    isRightPoint (point) {
+      if (!point || point.lng == 0 || point.lat == 0) {
+        return false
+      }
+      return true
+    },
+    convertCross (item, index) {
+      var that = this
+      var convertor = new window.BMap.Convertor()
+      var oriPoint = {lng: item[that.lngCol], lat: item[that.latCol]}
+      var pointArr = [oriPoint]
+      console.log('index', index, pointArr, convertor)
+      var c = new Convertor()
+      var r1 = c.WGS2BD09(oriPoint)
+      console.log(r1)
+    },
+    getItemPosition (item, index) {
       var that = this
       var layers = this.$store.getters.layersget[this.layerSelect]
-      var geometrys = this.$store.getters.geometrysInLayer[layers.layerId]
-      if (geometrys == undefined) {
-        geometrys = []
-      }
+      var geometrys = this.$store.getters.geometrysInLayer[layers.layerId] || []
       var myGeo = new window.BMap.Geocoder()
+      var convertor = new window.BMap.Convertor()
+      return new Promise(function (resolve, reject) {
+        item['归属区域'] = ''
+        var oriPoint = new window.BMap.Point(item[that.lngCol], item[that.latCol])
+        var address = item[that.addressCol]
+        var p1 = that.getPointFromCross(convertor, oriPoint, index)
+        var p2 = that.getPointFromAdress(myGeo, layers, address)
+        console.log(item, index)
+        Promise.all([p1, p2]).then(function (results) {
+          var point = that.locationFirst == '经纬度' ? results[0] : results[1]
+          var pointBei = that.locationFirst == '地址' ? results[0] : results[1]
+          if (!that.isRightPoint(point)) {
+            point = pointBei
+          }
+          for (var geometry of geometrys) {
+            if (geometry.contains(point)) {
+              item['归属区域'] = geometry._gridPoly.geometryName || {}
+              resolve(item)
+              break
+            }
+          }
+          resolve(item)
+        })
+      })
+    },
+    locationPointsEx () {
+      // var that = this
       var hasZone = false
       for (var prop of this.columnsInput) {
         if (prop.title == '归属区域') {
@@ -211,60 +291,16 @@ export default {
         }
         this.columnsInput.push(newCol)
       }
-      var itemEnd = this.dataInput[this.dataInput.length - 1]
-      for (let item of this.dataInput) {
-        item['归属区域'] = ''
-        var oriPoint = new window.BMap.Point(item[this.lngCol], item[this.latCol])
-        var p1 = new Promise(function (resolve, reject) {
-          if (that.maptype !== '百度') {
-            var convertor = new window.BMap.Convertor()
-            var pointArr = []
-            pointArr.push(oriPoint)
-            convertor.translate(pointArr, 1, 5, function (data) {
-              if (data.status === 0) {
-                resolve(data.points[0])
-              }
-            })
-          } else {
-            resolve(oriPoint)
-          }
-        })
-        var p2 = new Promise(function (resolve, reject) {
-          myGeo.getPoint(item[that.addressCol], point => {
-            if (point) {
-              resolve(point)
-            }
-          }, layers.layerDes)
-        })
-        var isRightPoint = function (point) {
-          if (point.lng == 0 || point.lat == 0) {
-            return false
-          }
-          return true
-        }
-        Promise.all([p1, p2]).then(function (results) {
-          var point = that.locationFirst == '经纬度' ? results[0] : results[1]
-          var pointBei = that.locationFirst == '地址' ? results[0] : results[1]
-          if (!isRightPoint(point)) {
-            point = pointBei
-          }
-          for (var geometry of geometrys) {
-            if (geometry.contains(point)) {
-              console.log(geometry._gridPoly.geometryName)
-              item['归属区域'] = geometry._gridPoly.geometryName || {}
-            }
-          }
-          console.log(item)
-          // that.dataInput.splice(itemIndex, 1, item)
-        })
-        if (item == itemEnd) {
-          that.loading = false
-          that.dataInput.pop()
-          setTimeout(function () {
-            that.dataInput.push(item)
-          }, 2000)
-        }
+      for (let index = 0; index < this.dataInput.length; index++) {
+        this.convertCross(this.dataInput[index], index)
       }
+      // var test = this.dataInput.map(that.convertCross)
+      /*      var promises = this.dataInput.map(that.getItemPosition)
+      Promise.all(promises).then((alldata) => {
+        console.log(alldata)
+        that.dataInput.push(that.dataInput.pop())
+        that.loading = false
+      }) */
     }
   }
 }
