@@ -191,7 +191,7 @@ export default {
 
       // this.locationPointsEx()
     },
-    getPointFromCross (convertor, oriPoint, index) {
+    getPointFromCross (item, index) {
       var that = this
       return new Promise(function (resolve, reject) {
         // resolve(oriPoint)
@@ -236,10 +236,9 @@ export default {
     },
     convertCross (item, index) {
       var that = this
-      var convertor = new window.BMap.Convertor()
       var oriPoint = {lng: item[that.lngCol], lat: item[that.latCol]}
-      var pointArr = [oriPoint]
-      console.log('index', index, pointArr, convertor)
+      // var pointArr = [oriPoint]
+      // console.log('index', index, pointArr, convertor)
       var c = new Convertor()
       var r1 = c.WGS2BD09(oriPoint)
       console.log(r1)
@@ -249,15 +248,14 @@ export default {
       var layers = this.$store.getters.layersget[this.layerSelect]
       var geometrys = this.$store.getters.geometrysInLayer[layers.layerId] || []
       var myGeo = new window.BMap.Geocoder()
-      var convertor = new window.BMap.Convertor()
       return new Promise(function (resolve, reject) {
         item['归属区域'] = ''
-        var oriPoint = new window.BMap.Point(item[that.lngCol], item[that.latCol])
+        // var oriPoint = new window.BMap.Point(item[that.lngCol], item[that.latCol])
         var address = item[that.addressCol]
-        var p1 = that.getPointFromCross(convertor, oriPoint, index)
+        // var pointBj09 = that.getPointFromCross(item, index)
         var p2 = that.getPointFromAdress(myGeo, layers, address)
         console.log(item, index)
-        Promise.all([p1, p2]).then(function (results) {
+        p2.then(function (results) {
           var point = that.locationFirst == '经纬度' ? results[0] : results[1]
           var pointBei = that.locationFirst == '地址' ? results[0] : results[1]
           if (!that.isRightPoint(point)) {
@@ -271,6 +269,8 @@ export default {
             }
           }
           resolve(item)
+        }).catch(error => {
+          console.log(error)
         })
       })
     },
