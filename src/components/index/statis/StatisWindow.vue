@@ -13,8 +13,8 @@
                 如果导入数据中有经纬度，请选择坐标
               </p>
               <RadioGroup v-model="maptype">
-                <Radio label="百度" border></Radio>
-                <Radio label="WGS82" border></Radio>
+                <Radio :label="laberBaidu" border></Radio>
+                <Radio :label="laberWGS" border></Radio>
               </RadioGroup>
               <Divider dashed />
               <Select v-model="addressCol" class="select" placeholder = "请选择地址列">
@@ -98,12 +98,15 @@ export default {
       screenHeight: 1000,
       loading: false,
       maptype: '百度',
+      laberBaidu: '百度',
+      laberWGS: 'WGS84',
       addressCol: '',
       lngCol: '',
       latCol: '',
       locationFirst: '地址',
       layerSelect: '',
-      layersget: this.$store.getters.layersget // 数据分区
+      layersget: this.$store.getters.layersget, // 数据分区
+      convertor: new Convertor()
     }
   },
   mounted () {
@@ -191,41 +194,15 @@ export default {
 
       // this.locationPointsEx()
     },
-    getPointFromCross (item, index) {
-      var that = this
-      return new Promise(function (resolve, reject) {
-        // resolve(oriPoint)
-        if (that.maptype == 'WGS84') {
-          var pointArr = []
-          pointArr.push(oriPoint)
-          // var convertor = new window.BMap.Convertor()
-          /* setTimeout(function () {
-            resolve(oriPoint)
-          }, 10500) */
-          console.log('index', index, pointArr)
-          setTimeout(convertor.translate(pointArr, 1, 5, function (data) {
-            console.log(oriPoint, data, index)
-            if (data.status === 0) {
-              resolve(data.points[0])
-            } else {
-              resolve(oriPoint)
-            }
-          }), 1500)
-        } else {
-          resolve(oriPoint)
-        }
-      })
-    },
     getPointFromAdress (myGeo, layers, address) {
       return new Promise(function (resolve, reject) {
-        resolve(null)
-        /* myGeo.getPoint(address, point => {
+        myGeo.getPoint(address, point => {
           if (point) {
             resolve(point)
           } else {
             resolve(null)
           }
-        }, layers.layerDes) */
+        }, layers.layerDes)
       })
     },
     isRightPoint (point) {
@@ -234,14 +211,12 @@ export default {
       }
       return true
     },
-    convertCross (item, index) {
-      var that = this
-      var oriPoint = {lng: item[that.lngCol], lat: item[that.latCol]}
-      // var pointArr = [oriPoint]
-      // console.log('index', index, pointArr, convertor)
-      var c = new Convertor()
-      var r1 = c.WGS2BD09(oriPoint)
-      console.log(r1)
+    convertCross (oriPoint) {
+      if (this.maptype == this.laberWGS) {
+        var r1 = this.convertor.WGS2BD09(oriPoint)
+        return r1
+      }
+      return oriPoint
     },
     getItemPosition (item, index) {
       var that = this
@@ -256,8 +231,8 @@ export default {
         var p2 = that.getPointFromAdress(myGeo, layers, address)
         console.log(item, index)
         p2.then(function (results) {
-          var point = that.locationFirst == '经纬度' ? results[0] : results[1]
-          var pointBei = that.locationFirst == '地址' ? results[0] : results[1]
+          var point = that.locationFirst == '经纬度' ? item['经纬度'] : results
+          var pointBei = that.locationFirst == '地址' ? results : item['经纬度']
           if (!that.isRightPoint(point)) {
             point = pointBei
           }
@@ -275,7 +250,7 @@ export default {
       })
     },
     locationPointsEx () {
-      // var that = this
+      var that = this
       var hasZone = false
       for (var prop of this.columnsInput) {
         if (prop.title == '归属区域') {
@@ -292,15 +267,16 @@ export default {
         this.columnsInput.push(newCol)
       }
       for (let index = 0; index < this.dataInput.length; index++) {
-        this.convertCross(this.dataInput[index], index)
+        var oriPoint = {lng: this.dataInput[index][this.lngCol], lat: this.dataInput[index][this.latCol]}
+        var r1 = this.convertCross(oriPoint)
+        this.dataInput[index]['经纬度'] = new window.BMap.Point(r1.lng, r1.lat)
       }
-      // var test = this.dataInput.map(that.convertCross)
-      /*      var promises = this.dataInput.map(that.getItemPosition)
+      var promises = this.dataInput.map(that.getItemPosition)
       Promise.all(promises).then((alldata) => {
         console.log(alldata)
         that.dataInput.push(that.dataInput.pop())
         that.loading = false
-      }) */
+      })
     }
   }
 }
