@@ -194,15 +194,20 @@ export default {
 
       // this.locationPointsEx()
     },
-    getPointFromAdress (myGeo, layers, address) {
+    getPointFromAdress (myGeo, layers, address, index) {
       return new Promise(function (resolve, reject) {
         myGeo.getPoint(address, point => {
+          resolve({index: index, point: point})
+          /*          console.log(point)
           if (point) {
-            resolve(point)
+            resolve({index: index, point: point})
           } else {
-            resolve(null)
-          }
+            resolve({index: index, point: point})
+          } */
         }, layers.layerDes)
+        setTimeout(function () {
+          resolve({index: index, point: new window.BMap.Point(0, 0)})
+        }, 15000)
       })
     },
     isRightPoint (point) {
@@ -218,36 +223,24 @@ export default {
       }
       return oriPoint
     },
-    getItemPosition (item, index) {
+    getItemPosition (alldata) {
       var that = this
       var layers = this.$store.getters.layersget[this.layerSelect]
       var geometrys = this.$store.getters.geometrysInLayer[layers.layerId] || []
-      var myGeo = new window.BMap.Geocoder()
-      return new Promise(function (resolve, reject) {
-        item['归属区域'] = ''
-        // var oriPoint = new window.BMap.Point(item[that.lngCol], item[that.latCol])
-        var address = item[that.addressCol]
-        // var pointBj09 = that.getPointFromCross(item, index)
-        var p2 = that.getPointFromAdress(myGeo, layers, address)
-        console.log(item, index)
-        p2.then(function (results) {
-          var point = that.locationFirst == '经纬度' ? item['经纬度'] : results
-          var pointBei = that.locationFirst == '地址' ? results : item['经纬度']
-          if (!that.isRightPoint(point)) {
-            point = pointBei
+      for (var pointUnit of alldata) {
+        var item = that.dataInput[pointUnit.index]
+        var point = that.locationFirst == '经纬度' ? item['经纬度'] : pointUnit.point
+        var pointBei = that.locationFirst == '地址' ? pointUnit.point : item['经纬度']
+        if (!that.isRightPoint(point)) {
+          point = pointBei
+        }
+        for (var geometry of geometrys) {
+          if (geometry.contains(point)) {
+            item['归属区域'] = geometry._gridPoly.geometryName || {}
+            break
           }
-          for (var geometry of geometrys) {
-            if (geometry.contains(point)) {
-              item['归属区域'] = geometry._gridPoly.geometryName || {}
-              resolve(item)
-              break
-            }
-          }
-          resolve(item)
-        }).catch(error => {
-          console.log(error)
-        })
-      })
+        }
+      }
     },
     locationPointsEx () {
       var that = this
@@ -271,9 +264,18 @@ export default {
         var r1 = this.convertCross(oriPoint)
         this.dataInput[index]['经纬度'] = new window.BMap.Point(r1.lng, r1.lat)
       }
-      var promises = this.dataInput.map(that.getItemPosition)
+      var addresses = this.dataInput.map((item) => {
+        return item[that.addressCol]
+      })
+      console.log(addresses)
+      var myGeo = new window.BMap.Geocoder()
+      var layers = this.$store.getters.layersget[this.layerSelect]
+      var promises = addresses.map((address, index) => {
+        return that.getPointFromAdress(myGeo, layers, address, index)
+      })
       Promise.all(promises).then((alldata) => {
         console.log(alldata)
+        that.getItemPosition(alldata)
         that.dataInput.push(that.dataInput.pop())
         that.loading = false
       })
