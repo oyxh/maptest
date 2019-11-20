@@ -149,6 +149,10 @@ export default {
           const wsname = workbook.SheetNames[0]// 取第一张表
           ws = XLSX.utils.sheet_to_json(workbook.Sheets[wsname])// 生成json表格内容
           console.log(ws)
+          if (ws.length > 5000) {
+            this.$Message.error('上传数据不超过5000行')
+            return
+          }
           const range = XLSX.utils.decode_range(workbook.Sheets[wsname]['!ref'])
           for (let c = range.s.c; c <= range.e.c; c++) {
             const header = XLSX.utils.encode_col(c) + '1'

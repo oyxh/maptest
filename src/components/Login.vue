@@ -9,9 +9,10 @@
         <FormItem label="密码" prop="pass">
           <Input type="password" v-model="loginData.pass" placeholder="请输入密码"/>
         </FormItem>
-        <FormItem class="form-footer">
-          <Button type="primary" @click="handleSubmit('loginData')">登陆</Button>
-          <Button type="ghost" @click="handleReset('loginData')" style="margin-left: 8px">重置</Button>
+        <FormItem class = "form-footer">
+          <Button type="primary"   @click="handleSubmit('loginData')">登陆</Button>
+          <Button type="ghost"  @click="handleReset('loginData')" >重置</Button>
+          <Button type="primary" ghost @click="handleAddUser">注册</Button>
         </FormItem>
       </Form>
     </div>
@@ -49,6 +50,10 @@ export default {
     },
     handleReset (name) {
       this.$refs[name].resetFields()
+    },
+    handleAddUser () {
+      console.log('注册用户')
+      this.$router.push('/register')
     },
     login () {
       console.log(this.loginData.acct, this.loginData.pass)
