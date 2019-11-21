@@ -47,6 +47,15 @@ export default {
     }
   },
   methods: {
+    handleSubmit (name) {
+      this.$refs[name].validate((valid) => {
+        if (valid) {
+          this.rigister()
+        } else {
+          this.$Message.error('表单验证失败!')
+        }
+      })
+    },
     samePass (rule, value, callback) {
       console.log(value)
       console.log(this.rigisterData.pass)
@@ -55,6 +64,36 @@ export default {
       } else {
         callback()
       }
+    },
+    handleReset (name) {
+      this.$refs[name].resetFields()
+    },
+    rigister () {
+      console.log(this.rigisterData.acct, this.rigisterData.pass)
+      var that = this
+      this.axios({
+        method: 'post',
+        url: '/api/login',
+        data: {
+          username: this.rigisterData.acct,
+          password: this.rigisterData.pass
+        },
+        transformRequest: [function (data) { // 登录时处理数据格式,处理后后台接收的参数为data按顺序传递
+          let ret = ''
+          for (let it in data) {
+            ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+          }
+          return ret
+        }]
+      })
+        .then((response) => {
+          if (response.status === 200) {
+            that.$router.push('/index')
+          }
+        })
+        .catch(function (error) {
+          console.log(error)
+        })
     }
   }
 }
