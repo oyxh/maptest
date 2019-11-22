@@ -73,7 +73,7 @@ export default {
       var that = this
       this.axios({
         method: 'post',
-        url: '/api/login',
+        url: '/api/register',
         data: {
           username: this.rigisterData.acct,
           password: this.rigisterData.pass
