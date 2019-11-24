@@ -22,6 +22,7 @@
 </template>
 
 <script>
+/* eslint-disable eqeqeq */
 export default {
   name: 'Register',
   data () {
@@ -69,8 +70,9 @@ export default {
       this.$refs[name].resetFields()
     },
     rigister () {
-      console.log(this.rigisterData.acct, this.rigisterData.pass)
       var that = this
+      console.log(this.rigisterData.acct, this.rigisterData.pass)
+      // var that = this
       this.axios({
         method: 'post',
         url: '/api/register',
@@ -88,7 +90,15 @@ export default {
       })
         .then((response) => {
           if (response.status === 200) {
-            that.$router.push('/index')
+            console.log(response)
+            // var userId = response.data.msg
+            if (response.data.code == 0) {
+              this.$Message.info('注册成功!')
+              that.$router.push('/index')
+            } else {
+              this.$Message.error(response.data.msg)
+            }
+            // that.$router.push('/index')
           }
         })
         .catch(function (error) {
