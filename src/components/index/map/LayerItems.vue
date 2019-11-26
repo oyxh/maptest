@@ -75,7 +75,7 @@ geometrysInLayer:所有几何体重新存储为，geometrysInLayer[layerId]为�
       importData: false,
       mask: null,
       isStartDraw: true,
-      modal1: false // 是否继续本区域的对话框
+      modal1: false// 是否继续本区域的对话框
       // layerChange: this.layerChangeFromFather
     }
   },

@@ -6,16 +6,20 @@
         <div class="usertext">
           <Icon type="ios-contact" />{{username}}
         </div>
-        <a href="javascript:;" class="userlink"> <Icon type="ios-settings" />账号设置</a>
+        <a href="javascript:;" class="userlink" @click="editUser"> <Icon type="ios-settings" />账号设置</a>
+      <edit-user :showValue = "showEditUserValue" @asycEditStatus = "asycEditStatus"></edit-user>
     </div>
 </template>
 
 <script>
+import EditUser from './map/EditUser'
 export default {
   name: 'UserPanel',
+  components: {EditUser},
   data: function () {
     return {
-      username: '匿名用户'
+      username: '匿名用户',
+      showEditUserValue: false // 显示用户编辑框
     }
   },
   mounted: function () {
@@ -29,6 +33,16 @@ export default {
     }, response => {
       console.log('error')
     })
+  },
+  methods: {
+    editUser: function () {
+      console.log(this.showEditUserValue)
+      this.showEditUserValue = true
+    },
+    asycEditStatus: function (value) {
+      console.log(value)
+      this.showEditUserValue = value
+    }
   }
 }
 </script>
