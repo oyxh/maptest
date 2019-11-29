@@ -26,7 +26,7 @@
       </Header>
       <Layout>
         <Sider hide-trigger :style="{background: '#fff'}">
-          <user-panel></user-panel>
+          <user-panel ref = "userpanel"></user-panel>
           <div>
             <Menu width="200px" active-name="1-2" :open-names="['1']">
               <MenuItem name="1" @click.native ="mapWindowAutoLeft">
@@ -48,7 +48,7 @@
                   用户管理
                 </template>
                 <MenuItem name="2-1">新增用户</MenuItem>
-                <MenuItem name="2-2">活跃用户</MenuItem>
+                <MenuItem name="2-2" @click.native = "updatePassword">更改密码</MenuItem>
               </Submenu>
             </Menu>
           </div>
@@ -94,6 +94,9 @@ export default {
       this.$router.push({path: '/statis'})
       this.isActiveStatis = !this.isActiveStatis
       /* this.currentView = StatisWindow */
+    },
+    updatePassword () {
+      this.$refs.userpanel.updatePassword()
     }
   }
 }

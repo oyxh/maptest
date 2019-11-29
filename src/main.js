@@ -9,7 +9,6 @@ import axios from 'axios'
 import VueAxios from 'vue-axios'
 import Vuex from 'vuex'
 import store from './store/index'
-
 Vue.use(Vuex)
 Vue.config.productionTip = false
 Vue.use(ViewUI) // 使用iview组件
