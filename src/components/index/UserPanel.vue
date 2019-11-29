@@ -112,6 +112,9 @@ export default {
           return returnCom
         },
         onOk: function () {
+          console.log(this)
+          console.log(this.title)
+          console.log(this.$children[0].$children[0].validate())
           console.log(that.user)
           console.log(that.$refs['updateUser'])
           console.log(that.updateUserDom)
