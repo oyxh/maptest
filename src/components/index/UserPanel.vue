@@ -11,12 +11,19 @@
 </template>
 
 <script>
+/* eslint-disable eqeqeq */
+
 export default {
   name: 'UserPanel',
   data: function () {
     return {
-      user: {name: '匿名用户'},
-      password: '',
+      user: {name: '匿名用户'
+      },
+      password: {
+        name: '匿名用户',
+        pass: '1111',
+        passTwo: '2222'
+      },
       updateUserDom: null,
       formValidate: {
         name: 'oyxh',
@@ -49,6 +56,8 @@ export default {
       console.log(response)
       // that.name = response.data.name
       that.user = response.data
+      console.log(that.user)
+      console.log(that.password)
     }, response => {
       console.log('error')
     })
@@ -144,64 +153,67 @@ export default {
     updatePassword: function () {
       console.log('update password')
       var that = this
-      var password = ''
-      var passwordTwo = ''
+      console.log(that.password.password)
+      console.log(that.user)
       this.$Modal.confirm({
         title: '更新密码：',
         render: (h) => {
-          var passInput = h('FormItem', {
-            props: {label: '输入密码',
-              prop: 'pass'}
-          }, [h('Input', { props: {
-            autofocus: true,
-            value: '1111',
-            placeholder: '请输入密码...'
-          },
-          on: {
-            input: (val) => {
-              password = val
-              that.password = val
+          var showItem = [
+            {
+              label: '输入密码',
+              prop: 'pass',
+              editFlag: false
+            },
+            {
+              label: '确认密码',
+              prop: 'passTwo',
+              editFlag: false
             }
-          }})])
-          var passInputConfirm = h('FormItem', {
-            props: {label: '确认密码',
-              prop: 'passTwo'}
-          }, [h('Input', {
-            props: {
+          ]
+          const inputs = showItem.map((item) => {
+            return h('FormItem', {
+              props: {label: item.label,
+                prop: item.prop}
+            }, [h('Input', { props: {
               autofocus: true,
-              value: '2222',
-              placeholder: '请再次输入密码...'
+              readonly: item.editFlag,
+              value: that.password[item.prop],
+              placeholder: '请输入' + item.label + '...'
             },
             on: {
               input: (val) => {
-                passwordTwo = val
-                // that.user[item.prop] = val
+                that.password[item.prop] = val
               }
-            }
-          })])
+            }})])
+          })
           return h('Form', {
             props: {
               labelWidth: 120,
               rules: that.ruleValidate,
-              model: that.user
+              model: that.password
             }
-          }, [passInput, passInputConfirm])
+          }, inputs)
         },
         onOk: function () {
           console.log(that.user)
-          console.log(password)
-          console.log(passwordTwo)
+          console.log(this)
+          console.log(that)
+          console.log(this.$children[0])
+          console.log(this.$refs['updatePass'])
+          console.log(that.user['password'])
+          console.log(that.user['passwordTwo'])
           // that.updateUser(that.user)
         }
       })
     },
     samePass (rule, value, callback) {
       console.log(value)
-      console.log(this.password)
-      if (value !== this.password) {
-        callback(new Error('两次密码不一致'))
-      } else {
+      console.log(this.password['pass'])
+      console.log(value == this.password['pass'])
+      if (this.password['passTwo'] == this.password['pass']) {
         callback()
+      } else {
+        callback(new Error('两次密码不一致'))
       }
     },
     updateValidate: function (valid) {
